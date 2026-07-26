@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — Rangmarg</title>
+<meta name="description" content="Why Rangmarg exists and how the passport-stamp itinerary builder works.">
+<meta property="og:title" content="About — Rangmarg">
+<meta property="og:description" content="Why Rangmarg exists and how the passport-stamp itinerary builder works.">
+<meta property="og:type" content="website">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,500&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script>
+  (function(){
+    var k="rangmarg_theme";
+    var s=localStorage.getItem(k);
+    var d=s||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");
+    document.documentElement.setAttribute("data-theme",d);
+  })();
+</script>
+</head>
+<body data-page="about">
+
+<main id="main">
+  <section class="about-hero container">
+    <span class="eyebrow">Your travel passport</span>
+    <h1>A planner built around how trips actually get decided.</h1>
+    <p class="about-lede">Most travel sites ask you to remember every place you liked across a dozen open tabs. Rangmarg treats each destination like a passport stamp — collect it once, and it stays in your itinerary until you're ready to send it to a planner.</p>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="about-hero-img reveal">
+        <img src="https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=1200&h=500&fit=crop&auto=format" alt="India heritage landscape" loading="lazy" width="1200" height="500">
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container story-grid">
+      <div class="reveal">
+        <h2 class="about-section-title">Why a passport, not a wishlist</h2>
+        <p class="about-prose">Wishlists get abandoned. A passport implies momentum — every stamp is a small commitment toward an actual trip. That framing shaped the whole build: search stays fast and local, adding a stamp is a single tap, and the itinerary you build is exactly what gets sent in your enquiry, with nothing re-typed.</p>
+        <div class="stat-block stat-block--spaced">
+          <div><span class="num">16</span><span class="label">Destinations catalogued</span></div>
+          <div><span class="num">5</span><span class="label">Regions of India</span></div>
+          <div><span class="num">3</span><span class="label">Budget tiers</span></div>
+          <div><span class="num">1</span><span class="label">Tap to add a stamp</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section band-dark">
+    <div class="container container--centered">
+      <span class="eyebrow eyebrow--gold">Get in touch</span>
+      <h2>Have a route in mind already?</h2>
+      <a href="contact.html" class="btn-primary mt-lg">Start an enquiry</a>
+    </div>
+  </section>
+</main>
+
+<script src="js/destinations.js"></script>
+<script src="js/templates.js"></script>
+<script src="js/script.js"></script>
+<script>injectShell("about");</script>
+</body>
+</html>
