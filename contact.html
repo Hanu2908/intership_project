@@ -1,110 +1,213 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Contact & Enquiry — Rangmarg</title>
-<meta name="description" content="Send your passport of destinations as a trip enquiry to a Rangmarg planner.">
-<meta property="og:title" content="Contact & Enquiry — Rangmarg">
-<meta property="og:description" content="Send your passport of destinations as a trip enquiry to a Rangmarg planner.">
-<meta property="og:type" content="website">
-<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,500&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
-<script>
-  (function(){
-    var k="rangmarg_theme";
-    var s=localStorage.getItem(k);
-    var d=s||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");
-    document.documentElement.setAttribute("data-theme",d);
-  })();
-</script>
-</head>
-<body data-page="contact">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact & Enquiry — Rangmarg</title>
+    <meta
+      name="description"
+      content="Send your passport of destinations as a trip enquiry to a Rangmarg planner."
+    />
+    <meta property="og:title" content="Contact & Enquiry — Rangmarg" />
+    <meta
+      property="og:description"
+      content="Send your passport of destinations as a trip enquiry to a Rangmarg planner."
+    />
+    <meta property="og:type" content="website" />
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,500&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <script>
+      (function () {
+        var k = "rangmarg_theme";
+        var s = localStorage.getItem(k);
+        var d =
+          s ||
+          (matchMedia("(prefers-color-scheme:dark)").matches
+            ? "dark"
+            : "light");
+        document.documentElement.setAttribute("data-theme", d);
+      })();
+    </script>
+    <style>
+      .map-embed {
+        margin-top: 24px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--line-strong, #ddd);
+        aspect-ratio: 4/3;
+      }
+      .map-embed iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        display: block;
+        filter: grayscale(0.15) contrast(1.02);
+      }
+      [data-theme="dark"] .map-embed iframe {
+        filter: grayscale(0.4) invert(0.9) contrast(0.9);
+      }
+    </style>
+  </head>
+  <body data-page="contact">
+    <main id="main">
+      <section class="about-hero container">
+        <span class="eyebrow">Contact &amp; enquiry</span>
+        <h1>Send your passport, get a real itinerary back.</h1>
+        <p class="about-lede">
+          Whatever stamps you've collected come along automatically. Add a
+          message with dates or preferences and a planner will follow up.
+        </p>
+      </section>
 
-<main id="main">
-  <section class="about-hero container">
-    <span class="eyebrow">Contact &amp; enquiry</span>
-    <h1>Send your passport, get a real itinerary back.</h1>
-    <p class="about-lede">Whatever stamps you've collected come along automatically. Add a message with dates or preferences and a planner will follow up.</p>
-  </section>
+      <section class="section section--sm">
+        <div class="container contact-wrap">
+          <div class="contact-info reveal">
+            <h2>Talk to a planner</h2>
+            <p>
+              This form is the single combined contact and enquiry point for the
+              portal — reach out with a general question or a full itinerary
+              request, and it comes to the same inbox.
+            </p>
+            <div class="contact-detail">
+              <span class="k">Email</span
+              ><span class="v">hello@rangmarg.example</span>
+            </div>
+            <div class="contact-detail">
+              <span class="k">Phone</span><span class="v">+91 12345 67890</span>
+            </div>
+            <div class="contact-detail">
+              <span class="k">Hours</span
+              ><span class="v">Mon–Sat, 10:00–19:00 IST</span>
+            </div>
+            <div class="contact-detail">
+              <span class="k">Based in</span
+              ><span class="v">Jaipur, Rajasthan</span>
+            </div>
 
-  <section class="section section--sm">
-    <div class="container contact-wrap">
+            <div class="map-embed">
+              <iframe
+                src="https://www.google.com/maps?q=Jaipur,Rajasthan&output=embed"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                title="Rangmarg office location — Jaipur, Rajasthan"
+              >
+              </iframe>
+            </div>
+          </div>
 
-      <div class="contact-info reveal">
-        <h2>Talk to a planner</h2>
-        <p>This form is the single combined contact and enquiry point for the portal — reach out with a general question or a full itinerary request, and it comes to the same inbox.</p>
-        <div class="contact-detail"><span class="k">Email</span><span class="v">hello@rangmarg.example</span></div>
-        <div class="contact-detail"><span class="k">Phone</span><span class="v">+91 12345 67890</span></div>
-        <div class="contact-detail"><span class="k">Hours</span><span class="v">Mon–Sat, 10:00–19:00 IST</span></div>
-        <div class="contact-detail"><span class="k">Based in</span><span class="v">Jaipur, Rajasthan</span></div>
-      </div>
+          <div class="enquiry-outer reveal">
+            <div class="enquiry-card">
+              <div class="confirm-banner">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  style="flex-shrink: 0"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span
+                  >Enquiry received — a planner will follow up by email within
+                  24 hours.</span
+                >
+              </div>
 
-      <div class="enquiry-outer reveal">
-        <div class="enquiry-card">
-        <div class="confirm-banner">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
-          <span>Enquiry received — a planner will follow up by email within 24 hours.</span>
+              <form novalidate>
+                <div class="form-row">
+                  <div class="form-field">
+                    <label for="name">Full name</label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      autocomplete="name"
+                    />
+                    <span class="form-error" id="name-error"></span>
+                  </div>
+                  <div class="form-field">
+                    <label for="phone">Phone</label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      autocomplete="tel"
+                      placeholder="Optional"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-field">
+                  <label for="email">Email</label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    autocomplete="email"
+                  />
+                  <span class="form-error" id="email-error"></span>
+                </div>
+
+                <div class="form-field">
+                  <label>Destinations in your passport</label>
+                  <div class="chip-field"></div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-field">
+                    <label for="dates">Preferred travel dates</label>
+                    <input
+                      type="text"
+                      id="dates"
+                      name="dates"
+                      placeholder="e.g. Oct 2026, 10 days"
+                    />
+                  </div>
+                  <div class="form-field">
+                    <label for="budget-pref">Budget tier</label>
+                    <select id="budget-pref" name="budget-pref">
+                      <option value="">No preference</option>
+                      <option>Budget</option>
+                      <option>Mid-range</option>
+                      <option>Premium</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-field">
+                  <label for="message">Message</label>
+                  <textarea
+                    id="message"
+                    name="message"
+                    placeholder="Group size, pace, anything else a planner should know"
+                  ></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary btn-primary--block">
+                  Send enquiry
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
+      </section>
+    </main>
 
-        <form novalidate>
-          <div class="form-row">
-            <div class="form-field">
-              <label for="name">Full name</label>
-              <input type="text" id="name" name="name" autocomplete="name">
-              <span class="form-error" id="name-error"></span>
-            </div>
-            <div class="form-field">
-              <label for="phone">Phone</label>
-              <input type="tel" id="phone" name="phone" autocomplete="tel" placeholder="Optional">
-            </div>
-          </div>
-
-          <div class="form-field">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" autocomplete="email">
-            <span class="form-error" id="email-error"></span>
-          </div>
-
-          <div class="form-field">
-            <label>Destinations in your passport</label>
-            <div class="chip-field"></div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-field">
-              <label for="dates">Preferred travel dates</label>
-              <input type="text" id="dates" name="dates" placeholder="e.g. Oct 2026, 10 days">
-            </div>
-            <div class="form-field">
-              <label for="budget-pref">Budget tier</label>
-              <select id="budget-pref" name="budget-pref">
-                <option value="">No preference</option>
-                <option>Budget</option><option>Mid-range</option><option>Premium</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-field">
-            <label for="message">Message</label>
-            <textarea id="message" name="message" placeholder="Group size, pace, anything else a planner should know"></textarea>
-          </div>
-
-          <button type="submit" class="btn-primary btn-primary--block">Send enquiry</button>
-        </form>
-        </div>
-      </div>
-
-    </div>
-  </section>
-</main>
-
-<script src="js/destinations.js"></script>
-<script src="js/templates.js"></script>
-<script src="js/script.js"></script>
-<script>injectShell("contact");</script>
-</body>
+    <script src="js/destinations.js"></script>
+    <script src="js/templates.js"></script>
+    <script src="js/script.js"></script>
+    <script>
+      injectShell("contact");
+    </script>
+  </body>
 </html>
