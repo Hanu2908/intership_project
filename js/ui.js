@@ -113,11 +113,11 @@
   async function makeMap(el, opts = {}) {
     const L = await loadLeaflet();
     const map = L.map(el, { scrollWheelZoom: false, ...opts });
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-      maxZoom: 18,
-      subdomains: "abcd",
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    }).addTo(map);
+    // Esri light grey canvas: free to use with attribution, no API key, works from file:// too
+    const esri = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/";
+    const attribution = 'Tiles &copy; <a href="https://www.esri.com">Esri</a>, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    L.tileLayer(esri + "World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", { maxZoom: 16, attribution }).addTo(map);
+    L.tileLayer(esri + "World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}", { maxZoom: 16 }).addTo(map);
     // the page keeps scrolling over the map; a click turns on wheel zoom
     el.addEventListener("click", () => map.scrollWheelZoom.enable());
     el.addEventListener("mouseleave", () => map.scrollWheelZoom.disable());

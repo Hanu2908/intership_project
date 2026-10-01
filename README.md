@@ -38,6 +38,6 @@ npm run build
 
 ## Stack
 
-HTML, CSS, vanilla JavaScript, [Three.js](https://threejs.org) r169, [Leaflet](https://leafletjs.com) 1.9 with OpenStreetMap / CARTO tiles, [Lucide](https://lucide.dev) icons, Google Fonts (Young Serif, Instrument Sans, Caveat). Photos from Wikimedia Commons under CC licences; the site lists every author and licence under "Photo credits" in the footer.
+HTML, CSS, vanilla JavaScript, [Three.js](https://threejs.org) r169, [Leaflet](https://leafletjs.com) 1.9 with Esri / OpenStreetMap tiles, [Lucide](https://lucide.dev) icons, Google Fonts (Young Serif, Instrument Sans, Caveat). Photos from Wikimedia Commons under CC licences; the site lists every author and licence under "Photo credits" in the footer.
 
 Costs are 2026 estimates. Agents, reviews and replies are sample data for the demo.
