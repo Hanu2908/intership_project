@@ -174,8 +174,43 @@
       : `<li>${empty("calendar-days", "Your days will appear here", "Each stop gets dated days with the main sights spread across them.")}</li>`;
   }
 
+  // ---- route map ----
+  let map, layer, mapBusy;
+  async function renderMap(est) {
+    const panel = $("#map-panel");
+    panel.hidden = !est.stops.length;
+    if (!est.stops.length) return;
+    const km = est.legs.reduce((a, l) => a + l.km, 0);
+    $("#map-km").textContent = km ? `${km.toLocaleString("en-IN")} km between stops` : "";
+    if (!map) {
+      if (mapBusy) return;
+      mapBusy = true;
+      try {
+        map = await window.UI.makeMap($("#route-map"), { center: [22.5, 80], zoom: 5 });
+        layer = window.L.layerGroup().addTo(map);
+      } catch (e) {
+        $("#route-map").innerHTML = `<p class="fine" style="padding:1.5rem">The map couldn't load.</p>`;
+        return;
+      } finally { mapBusy = false; }
+    }
+    const L = window.L;
+    layer.clearLayers();
+    const pts = est.stops.map((s) => [s.d.lat, s.d.lng]);
+    if (pts.length > 1) L.polyline(pts, { color: "#ef7d42", weight: 3, dashArray: "6 8", opacity: 0.9 }).addTo(layer);
+    est.stops.forEach((s, i) => {
+      L.marker([s.d.lat, s.d.lng], { icon: window.UI.pin(i + 1), title: s.d.name }).addTo(layer)
+        .bindTooltip(`${i + 1}. ${s.d.name} · ${s.nights}N`, { direction: "top", offset: [0, -14] });
+    });
+    setTimeout(() => {
+      map.invalidateSize();
+      if (pts.length > 1) map.fitBounds(pts, { padding: [36, 36], maxZoom: 8 });
+      else map.setView(pts[0], 8);
+    }, 60);
+  }
+
   function render() {
     const { est, days, warnings } = itinerary(trip());
+    renderMap(est);
     renderAddSelect();
     renderRoute(est, warnings);
     renderSummary(est);

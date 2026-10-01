@@ -83,44 +83,39 @@
       <blockquote>${esc(t.text)}</blockquote>
       <figcaption><span class="avatar" style="background:${colors[i % colors.length]}">${esc(t.name.split(" ").map((w) => w[0]).join("").slice(0, 2))}</span><span><strong>${esc(t.name)}</strong><span>${esc(t.trip)} · ${esc(t.from)}</span></span></figcaption>
     </figure>`).join("");
-  const slides = $$(".quote", track);
-  const dots = $("#dots");
-  dots.innerHTML = slides.map((_, i) => `<button type="button" role="tab" aria-label="Review ${i + 1}"></button>`).join("");
-  let current = 0;
-  const go = (i) => {
-    current = (i + slides.length) % slides.length;
-    track.scrollTo({ left: slides[current].offsetLeft - track.offsetLeft - 4 });
-  };
-  const sync = () => {
-    const x = track.scrollLeft;
-    let best = 0;
-    slides.forEach((s, i) => {
-      if (Math.abs(s.offsetLeft - track.offsetLeft - x) < Math.abs(slides[best].offsetLeft - track.offsetLeft - x)) best = i;
-    });
-    if (track.scrollLeft + track.clientWidth >= track.scrollWidth - 4) best = Math.max(best, slides.length - 1 - Math.floor(track.clientWidth / slides[0].offsetWidth) + 1);
-    current = best;
-    slides.forEach((s, i) => s.classList.toggle("is-active", i === best));
-    $$("button", dots).forEach((d, i) => d.setAttribute("aria-current", i === best));
-  };
-  let raf;
-  track.addEventListener("scroll", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(sync); }, { passive: true });
-  $("#prev").addEventListener("click", () => go(current - 1));
-  $("#next").addEventListener("click", () => go(current + 1));
-  dots.addEventListener("click", (e) => {
-    const b = e.target.closest("button");
-    if (b) go([...dots.children].indexOf(b));
+  window.UI.carousel($("#carousel"), { autoplay: 6000 });
+  $("#voices-img").outerHTML = photo("pichola", 640, 820, "Sunset over Lake Pichola, Udaipur");
+
+  // ---- in-season picks ----
+  const nowM = new Date().getMonth() + 1;
+  let picks = DESTINATIONS.filter((d) => d.months.includes(nowM));
+  if (picks.length < 5) picks = picks.concat(DESTINATIONS.filter((d) => !picks.includes(d))).slice(0, 6);
+  picks = picks.slice(0, 7);
+  $("#picks-kicker").textContent = `In season in ${MONTHS[nowM - 1]}`;
+  $("#picks-all").href = `explore.html?month=${nowM}`;
+  $("#picks .carousel__track").innerHTML = picks.map((d, i) => `<article class="pick" aria-label="${i + 1} of ${picks.length}: ${esc(d.name)}">
+      <div class="pick__media frame">${photo(d.photo, 960, 600, `${d.name}, ${d.state}`)}${window.UI.creditLine(d.photo)}</div>
+      <div class="pick__body">
+        <span class="pick__state">${esc(d.state)} · ${d.nights} night${d.nights > 1 ? "s" : ""}</span>
+        <h3>${esc(d.name)}</h3>
+        <p>${esc(d.tagline)}</p>
+        <div class="pick__meta">
+          <span>${icon("wallet")}From ${window.Budget.inr(window.Budget.perDay(d, "budget"))}/day</span>
+          ${window.UI.monthStrip(d.months, true)}
+        </div>
+        <div class="pick__actions">
+          <button class="btn btn--light btn--sm" type="button" data-dest="${d.id}">Details</button>
+          <button class="btn btn--ghost btn--sm" type="button" data-add-trip="${d.id}">${icon("plus")}Add to trip</button>
+        </div>
+      </div>
+    </article>`).join("");
+  window.UI.carousel($("#picks"), { autoplay: 5500 });
+  const paintPicks = () => $$("#picks [data-add-trip]").forEach((b) => {
+    const on = Store.inTrip(b.dataset.addTrip);
+    b.innerHTML = on ? `${icon("check")}In your trip` : `${icon("plus")}Add to trip`;
   });
-  track.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowRight") { e.preventDefault(); go(current + 1); }
-    if (e.key === "ArrowLeft") { e.preventDefault(); go(current - 1); }
-  });
-  // gentle autoplay, stops for good once the visitor touches the carousel
-  let auto = !matchMedia("(prefers-reduced-motion: reduce)").matches && setInterval(() => {
-    const r = track.getBoundingClientRect();
-    if (r.top < innerHeight && r.bottom > 0 && !document.hidden) go(current + 1);
-  }, 6000);
-  ["pointerdown", "focusin", "wheel"].forEach((ev) => $("#carousel").addEventListener(ev, () => { clearInterval(auto); auto = 0; }, { passive: true }));
-  sync();
+  paintPicks();
+  Store.on(paintPicks);
 
   // ---- articles ----
   const fmt = (s) => new Date(s + "T00:00:00");

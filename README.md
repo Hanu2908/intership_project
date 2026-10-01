@@ -9,9 +9,9 @@ A trip planner for India, built for our internship project on tourism. It covers
 
 | Page | What it does |
 | --- | --- |
-| `index.html` | 3D hero (Three.js), destination search, categories, packages, reviews, travel notes |
-| `explore.html` | Filter 14 destinations by month, region, type and daily budget; detail view with season, routes, costs, tips and scams |
-| `planner.html` | Reorder stops, set nights, travellers and style; live budget breakdown, target budget meter, dated day-by-day plan, print and copy |
+| `index.html` | 3D hero (Three.js), destination search, categories, in-season carousel, packages, reviews, travel notes |
+| `explore.html` | Photo slideshow, filter 14 destinations by month, region, type and daily budget, grid or map view; detail view with season, routes, costs, tips, scams and a location map |
+| `planner.html` | Reorder stops, set nights, travellers and style; route map, live budget breakdown, target budget meter, dated day-by-day plan, print and copy |
 | `packages.html` | Fixed-price packages, booking modal, cart with GST, reserve with 20% |
 | `agents.html` | Registered agents, enquiry form with your trip attached, status tracker |
 
@@ -38,6 +38,6 @@ npm run build
 
 ## Stack
 
-HTML, CSS, vanilla JavaScript, [Three.js](https://threejs.org) r169, [Lucide](https://lucide.dev) icons, Google Fonts (Young Serif, Instrument Sans, Caveat). Photos from Unsplash.
+HTML, CSS, vanilla JavaScript, [Three.js](https://threejs.org) r169, [Leaflet](https://leafletjs.com) 1.9 with OpenStreetMap / CARTO tiles, [Lucide](https://lucide.dev) icons, Google Fonts (Young Serif, Instrument Sans, Caveat). Photos from Wikimedia Commons under CC licences; the site lists every author and licence under "Photo credits" in the footer.
 
 Costs are 2026 estimates. Agents, reviews and replies are sample data for the demo.

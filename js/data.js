@@ -1,8 +1,42 @@
 /* Pathik data. Costs are 2026 estimates in INR.
    cost[level] = { stay: per room per night (2 share), food / local / act: per person per day } */
 (function () {
-  const img = (id, w = 640, h = 480) =>
-    `https://images.unsplash.com/photo-${id}?w=${w}&h=${h}&fit=crop&auto=format&q=70`;
+  /* Photos from Wikimedia Commons. path = commons hash path; w/h = original size. */
+  const PHOTOS = {
+    jaipur: { path: "4/40/Amber_Fort_Jaipur_01.jpg", w: 5184, h: 3456, by: "Rijin S", lic: "CC BY-SA 4.0", title: "Amer Fort, Jaipur" },
+    udaipur: { path: "c/c2/City_Palace_by_lake_Pichola%2C_Udaipur.jpg", w: 2242, h: 1380, by: "tommy", lic: "CC BY-SA 2.0", title: "City Palace on Lake Pichola, Udaipur" },
+    jaisalmer: { path: "f/f2/Panoramic_view_of_Jaisalmer_Fort.jpg", w: 4032, h: 1616, by: "Karanchawla30", lic: "CC BY-SA 4.0", title: "Jaisalmer Fort" },
+    agra: { path: "b/bd/Taj_Mahal%2C_Agra%2C_India_edit3.jpg", w: 3144, h: 2173, by: "Yann, edited by King of Hearts and Jbarta", lic: "CC BY-SA 3.0", title: "Taj Mahal, Agra" },
+    varanasi: { path: "1/1b/Morning_at_Varanasi_ghats.JPG", w: 2157, h: 1618, by: "Ilya Mauter", lic: "CC BY 3.0", title: "Morning on the Varanasi ghats" },
+    rishikesh: { path: "3/37/Ganges_at_Rishikesh_from_Lakshman_Jhula.jpg", w: 1306, h: 841, by: "Sudhanshu", lic: "CC BY-SA 4.0", title: "The Ganga at Rishikesh" },
+    leh: { path: "8/8b/Pangong_Tso_2.jpg", w: 4327, h: 2093, by: "KennyOMG", lic: "CC BY-SA 4.0", title: "Pangong Tso, Ladakh" },
+    amritsar: { path: "4/4d/Hamandir_Sahib_%28Golden_Temple%29.jpg", w: 5184, h: 3456, by: "Oleg Yunakov", lic: "CC BY-SA 3.0", title: "Golden Temple, Amritsar" },
+    goa: { path: "f/f4/Palolem_beach%2CGoa_-_panoramio.jpg", w: 4288, h: 2848, by: "Biswajit Majumdar", lic: "CC BY-SA 3.0", title: "Palolem beach, Goa" },
+    hampi: { path: "e/e2/Hampi%2C_Vittala_Temple%2C_chariot_%286337304059%29.jpg", w: 4272, h: 2848, by: "Arian Zwegers", lic: "CC BY 2.0", title: "Stone chariot, Vittala temple, Hampi" },
+    mysuru: { path: "3/3f/Mysore_Palace_with_Gardens.jpg", w: 2048, h: 1394, by: "Bikashrd", lic: "CC BY-SA 4.0", title: "Mysuru Palace" },
+    alleppey: { path: "7/70/Kerala_backwaters%2C_Houseboats_2%2C_India.jpg", w: 4032, h: 2688, by: "Vyacheslav Argenberg", lic: "CC BY 4.0", title: "Houseboats on the Kerala backwaters" },
+    munnar: { path: "0/09/View_of_Munnar_Tea_Plantation.jpg", w: 5184, h: 3456, by: "Shameemadhikarath", lic: "CC BY-SA 4.0", title: "Tea estates, Munnar" },
+    andaman: { path: "f/f1/Radhanagar_Beach%2C_Havelock_Island%2C_Andaman%2C_India.jpg", w: 4608, h: 3015, by: "Mvbellad", lic: "CC BY-SA 4.0", title: "Radhanagar beach, Havelock" },
+    nubra: { path: "8/81/Sand_dunes_in_Nubra_Valley%2C_Ladakh.jpg", w: 4000, h: 3000, by: "Yuvraj Anand", lic: "CC BY-SA 4.0", title: "Sand dunes, Nubra Valley" },
+    teahills: { path: "9/92/Munnar_Tea_Gardens.jpg", w: 3648, h: 2056, by: "Ruben Joseph", lic: "CC BY-SA 3.0", title: "Tea gardens near Munnar" },
+    thar: { path: "d/de/Camel_rides_in_Jaisalmer%2C_Thar_Desert_15.jpg", w: 4080, h: 1836, by: "Pinakpani", lic: "CC BY 4.0", title: "Camels in the Thar desert" },
+    pichola: { path: "1/1a/Udaipur_Lake_Pichola_Sunset.jpg", w: 3888, h: 2090, by: "Pallav.journo", lic: "CC BY-SA 4.0", title: "Sunset over Lake Pichola" },
+    spiti: { path: "f/f5/Kee_monastery_Spiti_Valley_%28edited%29.jpg", w: 3181, h: 2370, by: "Kulbhushan Singh Suryawanshi, edited by Aristeas", lic: "CC BY-SA 4.0", title: "Key monastery, Spiti Valley" },
+  };
+  const BUCKETS = [330, 500, 960, 1280, 1920];
+  const BASE = "https://upload.wikimedia.org/wikipedia/commons/";
+  // Smallest standard Commons thumbnail that is at least `w` wide
+  const img = (key, w = 960) => {
+    const p = PHOTOS[key];
+    if (!p) return "";
+    const b = BUCKETS.find((x) => x >= w) || 1920;
+    if (b >= p.w) return BASE + p.path;
+    return `${BASE}thumb/${p.path}/${b}px-${p.path.split("/").pop()}`;
+  };
+  const credit = (key) => {
+    const p = PHOTOS[key];
+    return p ? { ...p, page: "https://commons.wikimedia.org/wiki/File:" + decodeURIComponent(p.path.split("/").pop()) } : null;
+  };
 
   const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -27,7 +61,7 @@
   const DESTINATIONS = [
     {
       id: "jaipur", name: "Jaipur", state: "Rajasthan", region: "North", lat: 26.91, lng: 75.79,
-      types: ["heritage"], photo: "1477587458883-47145ed94245", nights: 3,
+      types: ["heritage"], photo: "jaipur", nights: 3,
       tagline: "Forts on the ridge, bazaars in the old walled city",
       overview: "Rajasthan's capital packs Amer Fort, the City Palace, Jantar Mantar and Hawa Mahal into one city. The old town is laid out on a grid, which makes it easy to cover on foot early in the morning before the heat and traffic build up.",
       months: [10, 11, 12, 1, 2, 3],
@@ -39,7 +73,7 @@
     },
     {
       id: "udaipur", name: "Udaipur", state: "Rajasthan", region: "North", lat: 24.58, lng: 73.71,
-      types: ["heritage"], photo: "1615836245337-f5b9b2303f10", nights: 2,
+      types: ["heritage"], photo: "udaipur", nights: 2,
       tagline: "Lake Pichola, palace walls and rooftop dinners",
       overview: "Udaipur is built around a chain of artificial lakes. The City Palace runs along the east bank of Lake Pichola, and the old town climbs uphill behind it. It is slower than Jaipur and good for two unhurried days.",
       months: [9, 10, 11, 12, 1, 2, 3],
@@ -51,7 +85,7 @@
     },
     {
       id: "jaisalmer", name: "Jaisalmer", state: "Rajasthan", region: "North", lat: 26.92, lng: 70.91,
-      types: ["desert", "heritage"], photo: "1622712376732-f4424a95160f", nights: 2,
+      types: ["desert", "heritage"], photo: "jaisalmer", nights: 2,
       tagline: "A sandstone fort people still live inside",
       overview: "Jaisalmer Fort is one of the few living forts in India, with homes, temples and guesthouses inside its walls. The Thar dunes start about 40 km out at Sam and Khuri, where most visitors spend one night in a desert camp.",
       months: [10, 11, 12, 1, 2],
@@ -63,7 +97,7 @@
     },
     {
       id: "agra", name: "Agra", state: "Uttar Pradesh", region: "North", lat: 27.18, lng: 78.02,
-      types: ["heritage"], photo: "1524492412937-b28074a5d7da", nights: 1,
+      types: ["heritage"], photo: "agra", nights: 1,
       tagline: "The Taj at sunrise, then Agra Fort before the crowds",
       overview: "Most people do Agra as a day trip from Delhi and regret rushing it. One night lets you see the Taj Mahal at sunrise, Agra Fort in the morning and Mehtab Bagh across the river at sunset.",
       months: [10, 11, 12, 1, 2, 3],
@@ -75,7 +109,7 @@
     },
     {
       id: "varanasi", name: "Varanasi", state: "Uttar Pradesh", region: "North", lat: 25.32, lng: 83.01,
-      types: ["spiritual", "heritage"], photo: "1561361513-2d000a50f0dc", nights: 2,
+      types: ["spiritual", "heritage"], photo: "varanasi", nights: 2,
       tagline: "Dawn on the ghats, aarti after dark",
       overview: "Eighty-odd ghats line the west bank of the Ganga. Mornings are for boat rides and the lanes behind Dashashwamedh, evenings for the Ganga aarti. Sarnath, where the Buddha first taught, is 10 km away.",
       months: [10, 11, 12, 1, 2, 3],
@@ -87,7 +121,7 @@
     },
     {
       id: "rishikesh", name: "Rishikesh", state: "Uttarakhand", region: "North", lat: 30.09, lng: 78.27,
-      types: ["spiritual", "adventure", "mountains"], photo: "1718528565878-7fd7c72f5196", nights: 3,
+      types: ["spiritual", "adventure", "mountains"], photo: "rishikesh", nights: 3,
       tagline: "Rafting by day, yoga and the river by evening",
       overview: "Rishikesh sits where the Ganga leaves the hills. It is known for yoga schools and ashrams, and for white-water rafting on the stretch above town. Alcohol and meat are not sold in the town.",
       months: [2, 3, 4, 5, 9, 10, 11],
@@ -99,7 +133,7 @@
     },
     {
       id: "leh", name: "Leh-Ladakh", state: "Ladakh", region: "North", lat: 34.15, lng: 77.58,
-      types: ["mountains", "adventure"], photo: "1626621341517-bbf3d9990a23", nights: 6,
+      types: ["mountains", "adventure"], photo: "leh", nights: 6,
       tagline: "High passes, monasteries and Pangong's blue",
       overview: "Leh is at 3,500 m, so the first two days are for doing nothing. After that, the classic loop is Nubra Valley over Khardung La and Pangong Tso over Chang La, with monasteries like Thiksey and Hemis closer to town.",
       months: [5, 6, 7, 8, 9],
@@ -111,7 +145,7 @@
     },
     {
       id: "amritsar", name: "Amritsar", state: "Punjab", region: "North", lat: 31.63, lng: 74.87,
-      types: ["spiritual", "heritage"], photo: "1514222134-b57cbb8ce073", nights: 2,
+      types: ["spiritual", "heritage"], photo: "amritsar", nights: 2,
       tagline: "The Golden Temple, langar and the Wagah ceremony",
       overview: "The Golden Temple is open almost all night, and its kitchen serves free meals to tens of thousands of people a day. Jallianwala Bagh is a five minute walk away, and the Attari-Wagah border ceremony is 30 km out.",
       months: [10, 11, 12, 1, 2, 3],
@@ -123,7 +157,7 @@
     },
     {
       id: "goa", name: "Goa", state: "Goa", region: "West", lat: 15.49, lng: 73.83,
-      types: ["beaches"], photo: "1512343879784-a960bf40e7f2", nights: 4,
+      types: ["beaches"], photo: "goa", nights: 4,
       tagline: "Beach shacks up north, quiet coves down south",
       overview: "North Goa (Baga, Anjuna, Vagator) is busy and loud. South Goa (Palolem, Agonda, Cola) is calmer and cleaner. Old Goa's churches and the Latin Quarter in Panjim are worth a day away from the sand.",
       months: [11, 12, 1, 2, 3],
@@ -135,7 +169,7 @@
     },
     {
       id: "hampi", name: "Hampi", state: "Karnataka", region: "South", lat: 15.34, lng: 76.46,
-      types: ["heritage", "adventure"], photo: "1722934804353-0d9f6a55ab5e", nights: 2,
+      types: ["heritage", "adventure"], photo: "hampi", nights: 2,
       tagline: "Ruins of Vijayanagara among giant boulders",
       overview: "Hampi was the capital of the Vijayanagara empire. Its temples, bazaars and royal enclosures are spread over 40 sq km of boulder hills along the Tungabhadra. Rent a bicycle or e-rickshaw and give it two full days.",
       months: [10, 11, 12, 1, 2],
@@ -147,7 +181,7 @@
     },
     {
       id: "mysuru", name: "Mysuru", state: "Karnataka", region: "South", lat: 12.3, lng: 76.65,
-      types: ["heritage"], photo: "1579429223126-29d2f6f9c1ac", nights: 2,
+      types: ["heritage"], photo: "mysuru", nights: 2,
       tagline: "A palace lit by 97,000 bulbs on Sunday nights",
       overview: "Mysuru is a calm royal city with a big palace, Devaraja market and Chamundi Hill. It is a good base for Srirangapatna and the Ranganathittu bird sanctuary. During Dasara in Sept-Oct the whole city is lit up.",
       months: [10, 11, 12, 1, 2, 3],
@@ -159,7 +193,7 @@
     },
     {
       id: "alleppey", name: "Alappuzha", state: "Kerala", region: "South", lat: 9.5, lng: 76.34,
-      types: ["backwaters"], photo: "1593417033942-bcdf26b74700", nights: 2,
+      types: ["backwaters"], photo: "alleppey", nights: 2,
       tagline: "A night on a houseboat in the backwaters",
       overview: "Alappuzha (Alleppey) is the gateway to Kerala's backwaters: canals, paddy fields and lakes below sea level. Most people take an overnight houseboat. Shared ferries and canoes reach the quieter canals for a fraction of the price.",
       months: [8, 9, 10, 11, 12, 1, 2, 3],
@@ -171,7 +205,7 @@
     },
     {
       id: "munnar", name: "Munnar", state: "Kerala", region: "South", lat: 10.09, lng: 77.06,
-      types: ["backwaters", "mountains"], photo: "1506905925346-21bda4d32df4", nights: 2,
+      types: ["backwaters", "mountains"], photo: "munnar", nights: 2,
       tagline: "Tea estates and misty hairpin roads",
       overview: "Munnar sits at 1,600 m in the Western Ghats, surrounded by tea estates. Eravikulam National Park is home to the Nilgiri tahr. The roads are slow, so plan fewer sights per day than you think.",
       months: [9, 10, 11, 12, 1, 2, 3, 4, 5],
@@ -183,7 +217,7 @@
     },
     {
       id: "andaman", name: "Andaman Islands", state: "Andaman & Nicobar", region: "Islands", lat: 11.62, lng: 92.73,
-      types: ["beaches", "adventure"], photo: "1544551763-46a013bb70d5", nights: 5,
+      types: ["beaches", "adventure"], photo: "andaman", nights: 5,
       tagline: "Reef snorkelling off Havelock and Neil",
       overview: "Flights land in Sri Vijaya Puram (Port Blair). From there, fast ferries reach Swaraj Dweep (Havelock) and Shaheed Dweep (Neil), where the beaches and reefs are. The Cellular Jail light show covers the islands' colonial history.",
       months: [11, 12, 1, 2, 3, 4],
@@ -196,67 +230,67 @@
   ];
 
   const CATEGORIES = [
-    { type: "heritage", label: "Heritage trails", photo: "1477587458883-47145ed94245" },
-    { type: "mountains", label: "Mountain escapes", photo: "1626621341517-bbf3d9990a23" },
-    { type: "beaches", label: "Beaches & islands", photo: "1544551763-46a013bb70d5" },
-    { type: "spiritual", label: "River towns", photo: "1561361513-2d000a50f0dc" },
-    { type: "backwaters", label: "Backwaters & tea", photo: "1593417033942-bcdf26b74700" },
-    { type: "desert", label: "Desert nights", photo: "1622712376732-f4424a95160f" },
+    { type: "heritage", label: "Heritage trails", photo: "jaipur" },
+    { type: "mountains", label: "Mountain escapes", photo: "spiti" },
+    { type: "beaches", label: "Beaches & islands", photo: "andaman" },
+    { type: "spiritual", label: "River towns", photo: "varanasi" },
+    { type: "backwaters", label: "Backwaters & tea", photo: "alleppey" },
+    { type: "desert", label: "Desert nights", photo: "thar" },
   ];
 
   const PACKAGES = [
     {
       id: "pk-rajput", title: "Jaipur and Agra in five nights", stops: ["jaipur", "agra"], nights: 5,
-      price: 18900, was: 21500, photo: "1524492412937-b28074a5d7da", agent: "ag-sandstone", level: "mid",
+      price: 18900, was: 21500, photo: "agra", agent: "ag-sandstone", level: "mid",
       includes: ["3-star hotels with breakfast", "AC sedan with driver for all transfers", "Licensed guide at Amer Fort and the Taj", "Delhi pickup and drop"],
       excludes: ["Monument tickets (about ₹2,300)", "Lunch and dinner", "Train or flight to Delhi"],
       cancel: "Full refund up to 15 days before. 50% after that.",
     },
     {
       id: "pk-ladakh", title: "Ladakh, Nubra and Pangong", stops: ["leh"], nights: 7,
-      price: 32500, photo: "1626621341517-bbf3d9990a23", agent: "ag-highpass", level: "mid",
+      price: 32500, photo: "nubra", agent: "ag-highpass", level: "mid",
       includes: ["Guesthouses in Leh, camps at Nubra and Pangong", "Breakfast and dinner daily", "Innova with driver for the whole loop", "Inner Line Permits and oxygen cylinder in car"],
       excludes: ["Flights to Leh", "Lunch", "Monastery entry fees"],
       cancel: "Full refund up to 21 days before. 25% after that.",
     },
     {
       id: "pk-kerala", title: "Kerala backwaters and tea hills", stops: ["munnar", "alleppey"], nights: 5,
-      price: 24800, was: 27900, photo: "1593417033942-bcdf26b74700", agent: "ag-kayal", level: "mid",
+      price: 24800, was: 27900, photo: "teahills", agent: "ag-kayal", level: "mid",
       includes: ["3 nights in Munnar, 1 night houseboat, 1 night Alappuzha", "All meals on the houseboat", "Kochi airport transfers", "Eravikulam entry"],
       excludes: ["Flights to Kochi", "Lunch outside the houseboat", "Ayurveda treatments"],
       cancel: "Full refund up to 10 days before. Houseboat deposit is non-refundable.",
     },
     {
       id: "pk-goa", title: "A slow week in South Goa", stops: ["goa"], nights: 6,
-      price: 16400, photo: "1512343879784-a960bf40e7f2", agent: "ag-konkan", level: "budget",
+      price: 16400, photo: "goa", agent: "ag-konkan", level: "budget",
       includes: ["Beach huts at Agonda and Palolem", "Breakfast daily", "Scooter for 6 days with helmet", "Sal backwater kayak trip"],
       excludes: ["Train or flight to Goa", "Fuel", "Lunch and dinner"],
       cancel: "Free cancellation up to 7 days before.",
     },
     {
       id: "pk-river", title: "Varanasi to Rishikesh by rail", stops: ["varanasi", "rishikesh"], nights: 6,
-      price: 19900, was: 22400, photo: "1561361513-2d000a50f0dc", agent: "ag-ghat", level: "mid",
+      price: 19900, was: 22400, photo: "rishikesh", agent: "ag-ghat", level: "mid",
       includes: ["Riverside hotels with breakfast", "AC 2-tier train Varanasi to Haridwar", "Sunrise boat and aarti seating in Varanasi", "16 km rafting trip in Rishikesh"],
       excludes: ["Travel to Varanasi", "Lunch and dinner", "Yoga classes"],
       cancel: "Full refund up to 14 days before. 50% after that.",
     },
     {
       id: "pk-andaman", title: "Havelock and Neil islands", stops: ["andaman"], nights: 5,
-      price: 38500, photo: "1544551763-46a013bb70d5", agent: "ag-reef", level: "mid",
+      price: 38500, photo: "andaman", agent: "ag-reef", level: "mid",
       includes: ["Beach resorts on Havelock and Neil", "All inter-island ferries", "One guided shore dive at Elephant beach", "Airport and jetty transfers"],
       excludes: ["Flights to Sri Vijaya Puram", "Lunch and dinner", "Extra dives"],
       cancel: "Full refund up to 21 days before. Ferry tickets are non-refundable after booking.",
     },
     {
       id: "pk-deccan", title: "Hampi and Mysuru", stops: ["hampi", "mysuru"], nights: 5,
-      price: 17200, photo: "1722934804353-0d9f6a55ab5e", agent: "ag-deccan", level: "budget",
+      price: 17200, photo: "hampi", agent: "ag-deccan", level: "budget",
       includes: ["Homestays with breakfast", "Overnight sleeper bus Bengaluru to Hampi", "E-rickshaw with guide for one day in Hampi", "Mysuru palace entry"],
       excludes: ["Return to Bengaluru", "Lunch and dinner", "Coracle ride"],
       cancel: "Full refund up to 7 days before.",
     },
     {
       id: "pk-desert", title: "Udaipur lakes to Jaisalmer dunes", stops: ["udaipur", "jaisalmer"], nights: 7,
-      price: 29900, photo: "1622712376732-f4424a95160f", agent: "ag-sandstone", level: "premium",
+      price: 29900, photo: "thar", agent: "ag-sandstone", level: "premium",
       includes: ["Heritage hotels in Udaipur and Jaisalmer", "One night in a Khuri desert camp", "Private car with driver", "Lake Pichola sunset boat"],
       excludes: ["Flights", "Lunch", "Camel ride"],
       cancel: "Full refund up to 21 days before. 50% after that.",
@@ -284,7 +318,7 @@
 
   const ARTICLES = [
     {
-      id: "scams", title: "Six tourist scams you'll meet in India, and what to say", date: "2026-09-12", read: 5, photo: "1564507592333-c60657eea523", tag: "Safety",
+      id: "scams", title: "Six tourist scams you'll meet in India, and what to say", date: "2026-09-12", read: 5, photo: "agra", tag: "Safety",
       body: [
         "Most scams in Indian tourist towns are not dangerous. They cost you money and an afternoon. They also follow scripts, so once you know the script you can step out of it politely.",
         "**'The monument is closed today.'** A friendly stranger near the gate says the Taj, the fort or the temple is shut, and offers to take you somewhere else. Walk to the gate and check. The only regular closure is the Taj Mahal on Fridays.",
@@ -296,7 +330,7 @@
       ],
     },
     {
-      id: "altitude", title: "Ladakh's first 48 hours: how to not get altitude sick", date: "2026-08-03", read: 4, photo: "1626621341517-bbf3d9990a23", tag: "Health",
+      id: "altitude", title: "Ladakh's first 48 hours: how to not get altitude sick", date: "2026-08-03", read: 4, photo: "leh", tag: "Health",
       body: [
         "Leh is at 3,500 m. If you fly in from the plains, your body has had about an hour to adjust to air with roughly a third less oxygen. Acute mountain sickness (AMS) is common and usually mild, but it can end a trip.",
         "**Day one: do nothing.** Check in, drink water, sleep. Skip the market walk. Headache and poor sleep on the first night are normal.",
@@ -307,7 +341,7 @@
       ],
     },
     {
-      id: "budget", title: "Where your trip budget actually goes", date: "2026-07-21", read: 3, photo: "1512343879784-a960bf40e7f2", tag: "Money",
+      id: "budget", title: "Where your trip budget actually goes", date: "2026-07-21", read: 3, photo: "goa", tag: "Money",
       body: [
         "When people go over budget, it's rarely because of the hotel. The room was booked and paid. The overrun is in the small things nobody adds up.",
         "**Getting between places.** A 600 km leg can cost ₹700 in a sleeper or ₹7,000 by flight. Decide this first, because it changes everything else.",
@@ -319,5 +353,5 @@
     },
   ];
 
-  window.PATHIK_DATA = { img, MONTHS, TYPES, REGIONS, LEVELS, DESTINATIONS, CATEGORIES, PACKAGES, AGENTS, TESTIMONIALS, ARTICLES };
+  window.PATHIK_DATA = { img, credit, PHOTOS, MONTHS, TYPES, REGIONS, LEVELS, DESTINATIONS, CATEGORIES, PACKAGES, AGENTS, TESTIMONIALS, ARTICLES };
 })();
