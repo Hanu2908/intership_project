@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- @include head -->
+<title>Packages · Pathik</title>
+<meta name="description" content="Fixed-price India tour packages from registered agents, with inclusions, exclusions, GST and cancellation rules listed before you book.">
+</head>
+<body data-page="packages">
+<!-- @include header -->
+
+<main id="main">
+  <header class="page-hero">
+    <!-- @include ridges -->
+    <div class="wrap">
+      <span class="kicker">Book</span>
+      <h1>Packages with nothing in small print</h1>
+      <p>Each package lists what's included, what isn't, GST, and the cancellation rule. You reserve with 20% and pay the rest only after the agent confirms.</p>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <ol class="how">
+      <li><span data-icon="list-checks"></span><div><h3>See the full price</h3><p>Inclusions, exclusions and 5% GST shown before checkout.</p></div></li>
+      <li><span data-icon="hand-coins"></span><div><h3>Reserve with 20%</h3><p>A token holds your dates. No full payment to someone you haven't met.</p></div></li>
+      <li><span data-icon="badge-check"></span><div><h3>Agent confirms</h3><p>Registered agents confirm within a day, then you pay the balance.</p></div></li>
+    </ol>
+
+    <div class="toolbar">
+      <div class="chips" id="pk-region" role="group" aria-label="Region"></div>
+      <div class="toolbar__right">
+        <label class="sr-only" for="pk-len">Trip length</label>
+        <select id="pk-len">
+          <option value="">Any length</option>
+          <option value="short">Up to 5 nights</option>
+          <option value="long">6 nights or more</option>
+        </select>
+        <label class="sr-only" for="pk-sort">Sort</label>
+        <select id="pk-sort">
+          <option value="price">Price, low to high</option>
+          <option value="price-desc">Price, high to low</option>
+          <option value="nights">Shortest first</option>
+          <option value="deal">Biggest saving</option>
+        </select>
+      </div>
+    </div>
+    <p class="fine" id="pk-count" aria-live="polite" style="margin-bottom:1rem"></p>
+    <div class="grid-cards" id="pk-grid"></div>
+  </div>
+</main>
+
+<!-- @include footer -->
+<!-- @include scripts -->
+<script src="js/packages.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!-- Generated from src/pages/packages.html. Edit the source, then run npm run build. -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1c1638">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://images.unsplash.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Instrument+Sans:wght@400..700&family=Young+Serif&display=swap">
+<link rel="stylesheet" href="css/main.css">
+<title>Packages · Pathik</title>
+<meta name="description" content="Fixed-price India tour packages from registered agents, with inclusions, exclusions, GST and cancellation rules listed before you book.">
+</head>
+<body data-page="packages">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head">
+  <div class="wrap head-row">
+    <a class="brand" href="index.html" aria-label="Pathik home">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="26" cy="15" r="7" fill="#ffc46b"/><path d="M2 34 14 16l6 8 5-6 13 16Z" fill="#b9a8e6"/><path d="M2 34 14 16l4 6-6 12Z" fill="#ef7d42"/></svg>
+      Pathik
+    </a>
+    <nav class="nav" id="nav" aria-label="Main">
+      <a href="index.html" data-nav="index">Home</a>
+      <a href="explore.html" data-nav="explore">Explore</a>
+      <a href="planner.html" data-nav="planner">Plan & budget</a>
+      <a href="packages.html" data-nav="packages" aria-current="page">Packages</a>
+      <a href="agents.html" data-nav="agents">Agents</a>
+    </nav>
+    <div class="head-actions">
+      <a class="icon-btn" href="planner.html" aria-label="My trip"><span data-icon="map"></span><span class="badge" data-count="trip" hidden>0</span></a>
+      <button class="icon-btn" type="button" data-open-cart aria-label="Cart"><span data-icon="shopping-bag"></span><span class="badge" data-count="cart" hidden>0</span></button>
+      <a class="btn btn--ghost btn--sm head-cta" href="agents.html">Ask an agent</a>
+      <button class="icon-btn burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="nav"><span data-icon="menu"></span></button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <header class="page-hero">
+    <svg class="ridges" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true">
+  <path d="M0 150 140 90l90 40 120-80 110 70 90-30 140 90 120-70 110 40 150-110 130 90 110-30 130 60v160H0Z" fill="#8f73c4" opacity=".55"/>
+  <path d="M0 200 120 160l140 50 110-60 150 70 100-40 160 60 130-80 150 70 120-40 160 60v130H0Z" fill="#5b469e" opacity=".8"/>
+  <path d="M0 250 160 220l130 40 170-50 140 50 160-30 150 40 170-50 150 40 210-20v80H0Z" fill="#2b2160"/>
+  <path d="M0 290 200 270l180 30 220-26 200 26 240-22 200 20 200-14v36H0Z" fill="#f8f4ee"/>
+</svg>
+    <div class="wrap">
+      <span class="kicker">Book</span>
+      <h1>Packages with nothing in small print</h1>
+      <p>Each package lists what's included, what isn't, GST, and the cancellation rule. You reserve with 20% and pay the rest only after the agent confirms.</p>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <ol class="how">
+      <li><span data-icon="list-checks"></span><div><h3>See the full price</h3><p>Inclusions, exclusions and 5% GST shown before checkout.</p></div></li>
+      <li><span data-icon="hand-coins"></span><div><h3>Reserve with 20%</h3><p>A token holds your dates. No full payment to someone you haven't met.</p></div></li>
+      <li><span data-icon="badge-check"></span><div><h3>Agent confirms</h3><p>Registered agents confirm within a day, then you pay the balance.</p></div></li>
+    </ol>
+
+    <div class="toolbar">
+      <div class="chips" id="pk-region" role="group" aria-label="Region"></div>
+      <div class="toolbar__right">
+        <label class="sr-only" for="pk-len">Trip length</label>
+        <select id="pk-len">
+          <option value="">Any length</option>
+          <option value="short">Up to 5 nights</option>
+          <option value="long">6 nights or more</option>
+        </select>
+        <label class="sr-only" for="pk-sort">Sort</label>
+        <select id="pk-sort">
+          <option value="price">Price, low to high</option>
+          <option value="price-desc">Price, high to low</option>
+          <option value="nights">Shortest first</option>
+          <option value="deal">Biggest saving</option>
+        </select>
+      </div>
+    </div>
+    <p class="fine" id="pk-count" aria-live="polite" style="margin-bottom:1rem"></p>
+    <div class="grid-cards" id="pk-grid"></div>
+  </div>
+</main>
+
+<footer class="site-foot">
+  <svg class="ridges" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 70V44l120-26 110 30 150-40 140 34 110-22 160 36 130-48 170 40 120-18 130 30 100-10V70Z" fill="#1c1638"/></svg>
+  <div class="wrap foot-grid">
+    <div class="foot-brand">
+      <a class="brand" href="index.html"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="26" cy="15" r="7" fill="#ffc46b"/><path d="M2 34 14 16l6 8 5-6 13 16Z" fill="#b9a8e6"/><path d="M2 34 14 16l4 6-6 12Z" fill="#ef7d42"/></svg>Pathik</a>
+      <p>Find a place, learn what it really costs, plan the days, then send the whole thing to one registered agent.</p>
+    </div>
+    <div>
+      <h4>Plan</h4>
+      <ul>
+        <li><a href="explore.html">Destinations</a></li>
+        <li><a href="planner.html">Trip planner</a></li>
+        <li><a href="packages.html">Packages</a></li>
+        <li><a href="agents.html">Agents</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Project</h4>
+      <ul>
+        <li><a href="docs/RESEARCH.md">Research</a></li>
+        <li><a href="docs/PLAN.md">Plan</a></li>
+        <li><a href="#" data-open-cart data-tab="bookings">My bookings</a></li>
+      </ul>
+    </div>
+    <div class="foot-nl">
+      <h4>Season notes, once a month</h4>
+      <form class="nl" id="newsletter" novalidate>
+        <div class="field">
+          <label class="sr-only" for="nl-email">Email</label>
+          <input id="nl-email" type="email" placeholder="you@example.com" autocomplete="email" required data-req="Add your email first.">
+          <p class="field__err" id="nl-email-err"></p>
+        </div>
+        <button class="btn btn--ember" type="submit">Subscribe</button>
+      </form>
+    </div>
+  </div>
+  <div class="wrap foot-base">
+    <p>© <span id="year">2026</span> Pathik. Internship project on tourism. Prices are estimates; agents and reviews are samples.</p>
+    <p>Photos <a href="https://unsplash.com">Unsplash</a> · Icons <a href="https://lucide.dev">Lucide</a> · 3D <a href="https://threejs.org">Three.js</a></p>
+  </div>
+</footer>
+
+<div class="drawer" id="drawer" hidden>
+  <aside class="drawer__panel" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+    <div class="drawer__head">
+      <h2 id="drawer-title">Your bag</h2>
+      <button class="icon-btn drawer__close" type="button" aria-label="Close"><span data-icon="x"></span></button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="cart" aria-selected="true">Cart <span id="drawer-cart-n">0</span></button>
+      <button type="button" role="tab" data-tab="bookings" aria-selected="false">Bookings <span id="drawer-book-n">0</span></button>
+    </div>
+    <div class="drawer__body" id="drawer-body" data-tab="cart"></div>
+    <div class="drawer__foot" id="drawer-foot"></div>
+  </aside>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<script src="js/data.js" defer></script>
+<script src="js/icons.js" defer></script>
+<script src="js/store.js" defer></script>
+<script src="js/budget.js" defer></script>
+<script src="js/ui.js" defer></script>
+<script src="js/packages.js" defer></script>
+</body>
+</html>
