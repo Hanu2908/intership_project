@@ -9,6 +9,7 @@
   },
   "devDependencies": {
     "esbuild": "0.24.0",
+    "leaflet": "^1.9.4",
     "lucide-static": "0.469.0",
     "three": "0.169.0"
   }

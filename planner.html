@@ -8,7 +8,7 @@
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://images.unsplash.com">
+<link rel="preconnect" href="https://upload.wikimedia.org">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Instrument+Sans:wght@400..700&family=Young+Serif&display=swap">
 <link rel="stylesheet" href="css/main.css">
 <title>Plan & budget · Pathik</title>
@@ -41,10 +41,16 @@
 <main id="main">
   <header class="page-hero">
     <svg class="ridges" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true">
-  <path d="M0 150 140 90l90 40 120-80 110 70 90-30 140 90 120-70 110 40 150-110 130 90 110-30 130 60v160H0Z" fill="#8f73c4" opacity=".55"/>
-  <path d="M0 200 120 160l140 50 110-60 150 70 100-40 160 60 130-80 150 70 120-40 160 60v130H0Z" fill="#5b469e" opacity=".8"/>
-  <path d="M0 250 160 220l130 40 170-50 140 50 160-30 150 40 170-50 150 40 210-20v80H0Z" fill="#2b2160"/>
-  <path d="M0 290 200 270l180 30 220-26 200 26 240-22 200 20 200-14v36H0Z" fill="#f8f4ee"/>
+  <defs>
+    <linearGradient id="rg-far" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a68bd3"/><stop offset="1" stop-color="#d79bb0"/></linearGradient>
+    <linearGradient id="rg-mid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6b55b0"/><stop offset="1" stop-color="#a77ea8"/></linearGradient>
+    <linearGradient id="rg-near" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d2f86"/><stop offset="1" stop-color="#8d6c9f"/></linearGradient>
+    <linearGradient id="rg-mist" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8f4ee" stop-opacity="0"/><stop offset=".55" stop-color="#f8f4ee" stop-opacity=".55"/><stop offset="1" stop-color="#f8f4ee"/></linearGradient>
+  </defs>
+  <path d="M0 128C7 132 81 188 121 190C161 192 226 141 240 141C254 141 315 195 355 189C395 183 467 105 480 105C493 105 531 179 571 186C611 193 703 146 720 146C737 146 824 194 864 189C904 183 949 113 960 113C971 113 1020 182 1060 184C1100 187 1183 125 1200 125C1217 125 1312 181 1352 185C1392 189 1435 150 1440 147V320H0Z" fill="url(#rg-far)" opacity=".55"/>
+  <path d="M0 184C5 186 40 225 70 222C100 218 168 161 180 161C192 161 225 223 255 223C285 223 347 162 360 161C373 161 416 221 446 220C476 218 527 152 540 153C553 153 606 219 636 225C666 231 709 187 720 187C731 187 768 224 798 224C828 224 886 185 900 185C914 185 980 219 1010 220C1040 221 1068 189 1080 189C1092 189 1157 220 1187 220C1217 219 1248 185 1260 185C1272 185 1333 223 1363 219C1393 215 1435 163 1440 159V320H0Z" fill="url(#rg-mid)" opacity=".85"/>
+  <path d="M0 239C6 241 42 263 66 260C90 257 133 222 144 222C155 222 173 259 197 259C221 259 275 224 288 224C301 224 324 260 348 261C372 262 421 229 432 229C443 229 460 257 484 258C508 259 561 237 576 237C591 238 634 262 658 258C682 255 708 218 720 219C732 219 773 262 797 262C821 262 853 218 864 218C875 218 905 258 929 260C953 262 997 228 1008 228C1019 228 1039 258 1063 258C1087 258 1139 228 1152 228C1165 228 1194 260 1218 261C1242 263 1282 237 1296 237C1310 237 1358 260 1382 262C1406 263 1435 246 1440 244V320H0Z" fill="url(#rg-near)"/>
+  <rect class="mist" x="0" y="170" width="1440" height="151" fill="url(#rg-mist)"/>
 </svg>
     <div class="wrap">
       <span class="kicker">Plan and budget</span>
@@ -65,6 +71,11 @@
           </div>
         </div>
         <div id="route" class="route"></div>
+      </section>
+
+      <section class="panel" id="map-panel" aria-labelledby="map-title" hidden>
+        <div class="panel__head"><h2 id="map-title">Route map</h2><span class="pill" id="map-km"></span></div>
+        <div class="map map--md" id="route-map" role="region" aria-label="Map of your route"></div>
       </section>
 
       <section class="panel no-print" aria-labelledby="details-title">
@@ -115,7 +126,10 @@
 </main>
 
 <footer class="site-foot">
-  <svg class="ridges" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 70V44l120-26 110 30 150-40 140 34 110-22 160 36 130-48 170 40 120-18 130 30 100-10V70Z" fill="#1c1638"/></svg>
+  <svg class="ridges" viewBox="0 0 1440 90" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 62C120 40 220 30 330 44S520 78 640 60 840 18 960 30 1160 70 1270 58 1400 40 1440 44V90H0Z" fill="#4a3a8f" opacity=".35"/>
+    <path d="M0 74C150 58 260 62 380 54S600 40 720 56 940 82 1060 70 1300 50 1440 60V90H0Z" fill="#1c1638"/>
+  </svg>
   <div class="wrap foot-grid">
     <div class="foot-brand">
       <a class="brand" href="index.html"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="26" cy="15" r="7" fill="#ffc46b"/><path d="M2 34 14 16l6 8 5-6 13 16Z" fill="#b9a8e6"/><path d="M2 34 14 16l4 6-6 12Z" fill="#ef7d42"/></svg>Pathik</a>
@@ -152,7 +166,7 @@
   </div>
   <div class="wrap foot-base">
     <p>© <span id="year">2026</span> Pathik. Internship project on tourism. Prices are estimates; agents and reviews are samples.</p>
-    <p>Photos <a href="https://unsplash.com">Unsplash</a> · Icons <a href="https://lucide.dev">Lucide</a> · 3D <a href="https://threejs.org">Three.js</a></p>
+    <p><a href="#" data-credits>Photo credits</a> (Wikimedia Commons) · Maps <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · Icons <a href="https://lucide.dev">Lucide</a> · 3D <a href="https://threejs.org">Three.js</a></p>
   </div>
 </footer>
 

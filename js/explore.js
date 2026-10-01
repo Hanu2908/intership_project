@@ -13,6 +13,7 @@
     region: params.get("region") || "",
     type: params.get("type") || "",
     sort: params.get("sort") || "season",
+    view: params.get("view") === "map" ? "map" : "grid",
   };
 
   const el = { q: $("#q"), month: $("#month"), level: $("#level"), max: $("#max"), sort: $("#sort") };
@@ -82,9 +83,13 @@
       ? list.map(card).join("")
       : `<div style="grid-column:1/-1">${empty("search-x", "Nothing matches all of that", "Try another month or a higher daily budget. Fewer filters usually helps.", `<button class="btn btn--ember btn--sm" type="button" data-reset>Clear filters</button>`)}</div>`;
     reveal($("#grid"));
+    $("#grid").hidden = state.view === "map";
+    $("#map").hidden = state.view !== "map";
+    $$("#view [data-view]").forEach((b) => b.setAttribute("aria-checked", b.dataset.view === state.view));
+    if (state.view === "map") renderMap(list);
     const p = new URLSearchParams();
     Object.entries(state).forEach(([k, v]) => {
-      if (v && !(k === "sort" && v === "season") && !(k === "level" && v === "mid")) p.set(k, v);
+      if (v && !(k === "sort" && v === "season") && !(k === "level" && v === "mid") && !(k === "view" && v === "grid")) p.set(k, v);
     });
     history.replaceState(null, "", location.pathname + (p.toString() ? "?" + p : "") + location.hash);
   }
@@ -113,6 +118,7 @@
 
   // repaint the add buttons when the trip changes (here or in the modal)
   Store.on(() => {
+    if (state.view === "map" && map) renderMap(sorted(DESTINATIONS.filter(matches)));
     $$("[data-add-trip]").forEach((b) => {
       const on = Store.inTrip(b.dataset.addTrip);
       b.classList.toggle("is-on", on);
@@ -120,6 +126,76 @@
       b.innerHTML = icon(on ? "check" : "plus");
     });
   });
+
+  // ---- map view ----
+  let map, layer;
+  async function renderMap(list) {
+    if (!map) {
+      try {
+        map = await window.UI.makeMap($("#map"), { center: [22.5, 80], zoom: 5 });
+      } catch (e) {
+        $("#map").innerHTML = `<p class="fine" style="padding:1.5rem">The map couldn't load. Check your connection, or use the grid view.</p>`;
+        return;
+      }
+      layer = window.L.layerGroup().addTo(map);
+    }
+    layer.clearLayers();
+    const pts = [];
+    list.forEach((d) => {
+      const on = Store.inTrip(d.id);
+      pts.push([d.lat, d.lng]);
+      window.L.marker([d.lat, d.lng], { icon: window.UI.pin(on ? "✓" : "", on ? "pin--on" : "pin--dot"), title: d.name })
+        .addTo(layer)
+        .bindPopup(`<div class="pop">
+          ${photo(d.photo, 330, 180, d.name, "pop__img")}
+          <strong>${esc(d.name)}</strong>
+          <span>${esc(d.state)} · ${inr(perDay(d, state.level))}/day</span>
+          <div class="pop__actions">
+            <button class="btn btn--ember btn--sm" type="button" data-dest="${d.id}">Details</button>
+            <button class="btn btn--line btn--sm" type="button" data-add-trip="${d.id}">${on ? "In trip" : "Add to trip"}</button>
+          </div>
+        </div>`, { maxWidth: 260, minWidth: 220 });
+    });
+    setTimeout(() => {
+      map.invalidateSize();
+      if (pts.length > 1) map.fitBounds(pts, { padding: [40, 40], maxZoom: 7 });
+      else if (pts.length === 1) map.setView(pts[0], 7);
+    }, 60);
+  }
+  $("#view").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-view]");
+    if (!b) return;
+    state.view = b.dataset.view;
+    render();
+  });
+
+  // ---- header slideshow ----
+  const slideIds = ["leh", "pichola", "alleppey", "hampi", "andaman", "spiti", "jaisalmer", "teahills"];
+  const slideDest = { pichola: "udaipur", spiti: null, teahills: "munnar" };
+  const { PHOTOS } = window.PATHIK_DATA;
+  const sTrack = $("#slides-track");
+  sTrack.innerHTML = slideIds.map((k, i) => `<figure class="slide${i === 0 ? " is-on" : ""}" aria-hidden="${i !== 0}">${photo(k, 1920, 1080, PHOTOS[k].title, "", i === 0)}</figure>`).join("");
+  const slides = $$(".slide", sTrack);
+  let si = 0;
+  function showSlide(i) {
+    si = (i + slides.length) % slides.length;
+    slides.forEach((f, j) => { f.classList.toggle("is-on", j === si); f.setAttribute("aria-hidden", j !== si); });
+    const k = slideIds[si];
+    const dest = slideDest[k] === undefined ? k : slideDest[k];
+    const cap = $("#slides-caption");
+    cap.innerHTML = `${icon("map-pin")}<span>${esc(PHOTOS[k].title)}</span>${dest ? `<em>View ${icon("arrow-right")}</em>` : ""}`;
+    cap.dataset.slideDest = dest || "";
+    cap.disabled = !dest;
+    $("#slides-count").textContent = `${si + 1} / ${slides.length}`;
+  }
+  $("#slides-caption").addEventListener("click", (e) => { const id = e.currentTarget.dataset.slideDest; if (id) openDestination(id, state.level); });
+  let slideTimer;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const restart = () => { clearInterval(slideTimer); if (!reduce) slideTimer = setInterval(() => !document.hidden && showSlide(si + 1), 6000); };
+  $("#slides-prev").addEventListener("click", () => { showSlide(si - 1); restart(); });
+  $("#slides-next").addEventListener("click", () => { showSlide(si + 1); restart(); });
+  showSlide(0);
+  restart();
 
   syncInputs();
   render();
