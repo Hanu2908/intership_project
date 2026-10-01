@@ -773,7 +773,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--v
 /* maps */
 .map { position: relative; z-index: 0; isolation: isolate; border-radius: var(--r-lg); overflow: hidden; background: var(--lilac-soft); box-shadow: var(--shadow-1); }
 .map[hidden] { display: none; }
-.map--lg { height: min(70svh, 620px); }
+.map--lg { height: min(78svh, 700px); }
 .map--md { height: 360px; }
 .map--sm { height: 240px; border-radius: var(--r); box-shadow: none; }
 .leaflet-container { font-family: var(--sans); }

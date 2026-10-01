@@ -230,7 +230,7 @@
       </div>`,
       { cls: "modal--wide", label: d.name }
     );
-    makeMap($("#dest-map", dlg), { center: [d.lat, d.lng], zoom: 9 }).then((map) => {
+    makeMap($("#dest-map", dlg), { center: [d.lat, d.lng], zoom: 7 }).then((map) => {
       window.L.marker([d.lat, d.lng], { icon: pin("", "pin--dot") }).addTo(map).bindTooltip(d.name, { direction: "top", offset: [0, -14] });
       setTimeout(() => map.invalidateSize(), 250);
     }).catch(() => ($("#dest-map", dlg).innerHTML = `<p class="fine" style="padding:1rem">Map couldn't load. <a href="${gmaps(d)}">Open in Google Maps</a>.</p>`));
