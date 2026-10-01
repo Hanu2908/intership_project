@@ -22,9 +22,109 @@
     });
   }
 
-  function photo(id, w, h, alt, cls = "") {
-    return `<img class="${cls}" src="${img(id, w, h)}" alt="${esc(alt)}" width="${w}" height="${h}" loading="lazy" decoding="async">`;
+  function photo(id, w, h, alt, cls = "", eager = false) {
+    const one = img(id, w), two = img(id, w * 2);
+    return `<img class="${cls}" src="${one}"${two !== one ? ` srcset="${one} 1x, ${two} 2x"` : ""} alt="${esc(alt)}" width="${w}" height="${h}" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">`;
   }
+
+  // ---------- photo credits (CC licences need attribution) ----------
+  function openCredits() {
+    const { PHOTOS, credit } = window.PATHIK_DATA;
+    modal(`<div class="article">
+      <span class="kicker">Thank you</span>
+      <h2>Photo credits</h2>
+      <p class="muted">All photos come from Wikimedia Commons and are used under the licences below.</p>
+      <ul class="credits">${Object.keys(PHOTOS).map((k) => {
+        const c = credit(k);
+        return `<li>${photo(k, 120, 80, "", "credits__img")}<div><strong>${esc(c.title)}</strong><span>${esc(c.by)} · ${esc(c.lic)} · <a href="${c.page}" target="_blank" rel="noopener">Source</a></span></div></li>`;
+      }).join("")}</ul>
+    </div>`, { label: "Photo credits" });
+  }
+  const creditLine = (key) => {
+    const c = window.PATHIK_DATA.credit(key);
+    return c ? `<a class="photo-credit" href="${c.page}" target="_blank" rel="noopener">Photo: ${esc(c.by)}, ${esc(c.lic)}</a>` : "";
+  };
+
+  // ---------- carousel (scroll-snap track + arrows + dots + optional autoplay) ----------
+  function carousel(root, { autoplay = 0 } = {}) {
+    const track = $(".carousel__track", root);
+    const slides = [...track.children];
+    const dots = $(".dots", root);
+    if (!slides.length) return;
+    if (dots) dots.innerHTML = slides.map((_, i) => `<button type="button" aria-label="Slide ${i + 1}"></button>`).join("");
+    const center = track.dataset.align === "center";
+    let current = 0;
+    const left = (el) => el.offsetLeft - track.offsetLeft;
+    const go = (i) => {
+      current = (i + slides.length) % slides.length;
+      const s = slides[current];
+      track.scrollTo({ left: center ? left(s) - (track.clientWidth - s.offsetWidth) / 2 : left(s) - 4 });
+    };
+    const sync = () => {
+      const ref = track.scrollLeft + (center ? track.clientWidth / 2 : 4);
+      let best = 0, bd = Infinity;
+      slides.forEach((s, i) => {
+        const d = Math.abs((center ? left(s) + s.offsetWidth / 2 : left(s)) - ref);
+        if (d < bd) { bd = d; best = i; }
+      });
+      if (!center && track.scrollLeft + track.clientWidth >= track.scrollWidth - 4) best = slides.length - 1;
+      current = best;
+      slides.forEach((s, i) => s.classList.toggle("is-active", i === best));
+      if (dots) $$("button", dots).forEach((d, i) => d.setAttribute("aria-current", i === best));
+    };
+    let raf;
+    track.addEventListener("scroll", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(sync); }, { passive: true });
+    $("[data-prev]", root)?.addEventListener("click", () => go(current - 1));
+    $("[data-next]", root)?.addEventListener("click", () => go(current + 1));
+    dots?.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) go([...dots.children].indexOf(b)); });
+    track.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight") { e.preventDefault(); go(current + 1); }
+      if (e.key === "ArrowLeft") { e.preventDefault(); go(current - 1); }
+    });
+    if (autoplay && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const timer = setInterval(() => {
+        const r = track.getBoundingClientRect();
+        if (r.top < innerHeight && r.bottom > 0 && !document.hidden) go(current + 1);
+      }, autoplay);
+      ["pointerdown", "focusin", "wheel", "touchstart"].forEach((ev) => root.addEventListener(ev, () => clearInterval(timer), { passive: true }));
+    }
+    if (center) requestAnimationFrame(() => { track.style.scrollBehavior = "auto"; go(0); track.style.scrollBehavior = ""; });
+    sync();
+    return { go };
+  }
+
+  // ---------- maps (Leaflet, loaded only when a map is shown) ----------
+  let leafletReady;
+  function loadLeaflet() {
+    if (window.L) return Promise.resolve(window.L);
+    leafletReady = leafletReady || new Promise((res, rej) => {
+      const css = document.createElement("link");
+      css.rel = "stylesheet";
+      css.href = "vendor/leaflet/leaflet.css";
+      document.head.appendChild(css);
+      const js = document.createElement("script");
+      js.src = "vendor/leaflet/leaflet.js";
+      js.onload = () => res(window.L);
+      js.onerror = rej;
+      document.head.appendChild(js);
+    });
+    return leafletReady;
+  }
+  async function makeMap(el, opts = {}) {
+    const L = await loadLeaflet();
+    const map = L.map(el, { scrollWheelZoom: false, ...opts });
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+      maxZoom: 18,
+      subdomains: "abcd",
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    }).addTo(map);
+    // the page keeps scrolling over the map; a click turns on wheel zoom
+    el.addEventListener("click", () => map.scrollWheelZoom.enable());
+    el.addEventListener("mouseleave", () => map.scrollWheelZoom.disable());
+    return map;
+  }
+  const pin = (label = "", cls = "") => window.L.divIcon({ className: `pin ${cls}`, html: `<span>${label}</span>`, iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -16] });
+  const gmaps = (d) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.name + ", " + d.state)}`;
 
   // Broken image: hide it, the frame behind shows a gradient
   document.addEventListener("error", (e) => {
@@ -93,7 +193,7 @@
         <p class="fine">Per person per day, except rooms. About <strong>${inr(Budget.perDay(d, lv))}</strong> a day each for two sharing.</p>`;
     };
     const dlg = modal(
-      `<figure class="dest-hero">${photo(d.photo, 960, 520, `${d.name}, ${d.state}`)}
+      `<figure class="dest-hero">${photo(d.photo, 960, 520, `${d.name}, ${d.state}`, "", true)}${creditLine(d.photo)}
         <figcaption><span class="kicker">${esc(d.state)} · ${d.types.map((t) => TYPES[t]).join(", ")}</span><h2>${esc(d.name)}</h2><p>${esc(d.tagline)}</p></figcaption>
       </figure>
       <div class="dest-body">
@@ -107,6 +207,9 @@
             <li>${icon("train-front")}<span>${esc(d.reach.rail)}</span></li>
             <li>${icon("car")}<span>${esc(d.reach.road)}</span></li>
           </ul>
+          <h3>On the map</h3>
+          <div class="map map--sm" id="dest-map" role="region" aria-label="Map of ${esc(d.name)}"></div>
+          <p class="fine" style="margin-top:.5rem"><a href="${gmaps(d)}" target="_blank" rel="noopener">Open in Google Maps</a> for directions.</p>
           <h3>Worth your time</h3>
           <ul class="ticks">${d.things.map((t) => `<li>${icon("check")}${esc(t)}</li>`).join("")}</ul>
           <div class="two-col">
@@ -118,7 +221,7 @@
           <h3>What a day costs</h3>
           <div class="seg" role="radiogroup" aria-label="Travel style">${Object.entries(LEVELS).map(([k, v]) => `<button role="radio" aria-checked="${k === lv}" data-lv="${k}">${v.label}</button>`).join("")}</div>
           <div class="cost-box">${costTable()}</div>
-          <p class="fine">${icon("moon")} Most people stay <strong>${d.nights} night${d.nights > 1 ? "s" : ""}</strong>.</p>
+          <p class="fine" style="display:block">${icon("moon")} Most people stay <strong>${d.nights} night${d.nights > 1 ? "s" : ""}</strong>.</p>
           <div class="dest-actions">
             <button class="btn btn--ember btn--block" data-trip="${d.id}"></button>
             <a class="btn btn--line btn--block" href="agents.html?dest=${d.id}">${icon("message-circle")}Ask a local agent</a>
@@ -127,6 +230,10 @@
       </div>`,
       { cls: "modal--wide", label: d.name }
     );
+    makeMap($("#dest-map", dlg), { center: [d.lat, d.lng], zoom: 9 }).then((map) => {
+      window.L.marker([d.lat, d.lng], { icon: pin("", "pin--dot") }).addTo(map).bindTooltip(d.name, { direction: "top", offset: [0, -14] });
+      setTimeout(() => map.invalidateSize(), 250);
+    }).catch(() => ($("#dest-map", dlg).innerHTML = `<p class="fine" style="padding:1rem">Map couldn't load. <a href="${gmaps(d)}">Open in Google Maps</a>.</p>`));
     const tripBtn = $("[data-trip]", dlg);
     const paint = () => {
       const on = Store.inTrip(d.id);
@@ -553,6 +660,7 @@
     if (book) return openBooking(book.dataset.book);
     const cart = t.closest("[data-open-cart]");
     if (cart) { e.preventDefault(); return setTimeout(() => openDrawer(cart.dataset.tab || "cart"), cart.hasAttribute("data-close") ? 120 : 0); }
+    if (t.closest("[data-credits]")) { e.preventDefault(); return openCredits(); }
     const add = t.closest("[data-add-trip]");
     if (add) {
       const id = add.dataset.addTrip;
@@ -587,5 +695,5 @@
     }
   });
 
-  window.UI = { $, $$, esc, rich, icon, hydrate, photo, toast, modal, closeModal, monthStrip, openDestination, openBooking, packageCard, openDrawer, cartTotals, stepper, bindSteppers, validate, liveValidate, field, reveal, fmtDate, empty };
+  window.UI = { carousel, makeMap, loadLeaflet, pin, gmaps, creditLine, openCredits, $, $$, esc, rich, icon, hydrate, photo, toast, modal, closeModal, monthStrip, openDestination, openBooking, packageCard, openDrawer, cartTotals, stepper, bindSteppers, validate, liveValidate, field, reveal, fmtDate, empty };
 })();

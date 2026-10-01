@@ -9,12 +9,20 @@
 <!-- @include header -->
 
 <main id="main">
-  <header class="page-hero">
-    <!-- @include ridges -->
+  <header class="page-hero page-hero--slides" id="slides" aria-roledescription="carousel" aria-label="Destination photos">
+    <div class="slides" id="slides-track" aria-live="off"></div>
     <div class="wrap">
       <span class="kicker">Find, then learn</span>
       <h1>Where should you go?</h1>
       <p>Filter by the month you can travel and what you want to spend. Open any place for its season, routes, daily costs and the scams locals warn about.</p>
+      <div class="slides__bar">
+        <button class="slides__caption" type="button" id="slides-caption"></button>
+        <div class="slides__ctrl">
+          <button class="icon-btn" type="button" id="slides-prev" aria-label="Previous photo"><span data-icon="chevron-left"></span></button>
+          <span class="slides__count" id="slides-count" aria-live="polite"></span>
+          <button class="icon-btn" type="button" id="slides-next" aria-label="Next photo"><span data-icon="chevron-right"></span></button>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -60,6 +68,10 @@
     <div class="result-bar">
       <p id="count"></p>
       <div class="toolbar__right">
+        <div class="seg seg--icons" role="radiogroup" aria-label="View" id="view">
+          <button type="button" role="radio" data-view="grid" aria-checked="true"><span data-icon="layout-grid"></span>Grid</button>
+          <button type="button" role="radio" data-view="map" aria-checked="false"><span data-icon="map"></span>Map</button>
+        </div>
         <label class="sr-only" for="sort">Sort</label>
         <select id="sort">
           <option value="season">In season first</option>
@@ -70,6 +82,7 @@
       </div>
     </div>
     <div class="grid-cards" id="grid"></div>
+    <div class="map map--lg" id="map" hidden role="region" aria-label="Map of matching destinations"></div>
   </section>
 </main>
 
