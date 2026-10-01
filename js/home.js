@@ -81,7 +81,7 @@
   track.innerHTML = TESTIMONIALS.map((t, i) => `<figure class="quote" role="group" aria-roledescription="slide" aria-label="${i + 1} of ${TESTIMONIALS.length}">
       <span class="stars" aria-label="${t.rating} out of 5">${icon("star").repeat(t.rating)}</span>
       <blockquote>${esc(t.text)}</blockquote>
-      <figcaption><span class="avatar" style="background:${colors[i % colors.length]}">${esc(t.name.split(" ").map((w) => w[0]).join("").slice(0, 2))}</span><span><strong>${esc(t.name)}</strong><span>${esc(t.trip)} · ${esc(t.from)}</span></span></figcaption>
+      <figcaption><span class="avatar" style="background:${colors[i % colors.length]}">${esc(t.name.split(/\s+/).filter((w) => /^\p{L}/u.test(w)).map((w) => w[0]).join("").slice(0, 2).toUpperCase())}</span><span><strong>${esc(t.name)}</strong><span>${esc(t.trip)} · ${esc(t.from)}</span></span></figcaption>
     </figure>`).join("");
   window.UI.carousel($("#carousel"), { autoplay: 6000 });
   $("#voices-img").outerHTML = photo("pichola", 640, 820, "Sunset over Lake Pichola, Udaipur");
@@ -159,7 +159,8 @@
   function loadScene() {
     if (skip || !webgl()) return;
     const s = document.createElement("script");
-    s.src = "js/hero-scene.js";
+    const v = document.documentElement.dataset.v;
+    s.src = "js/hero-scene.js" + (v ? "?v=" + v : "");
     s.async = true;
     document.body.appendChild(s);
   }
