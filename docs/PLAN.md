@@ -6,7 +6,7 @@ Pathik (पथिक, "wayfarer") is a trip planner for India. One site covers t
 - HTML, CSS, vanilla JavaScript (no framework).
 - Three.js for the hero scene: layered mountain ridges at dusk with birds and drifting dust. Bundled with esbuild into one classic script so the site also opens from `file://`.
 - Lucide icons. Only the icons we use are compiled into `js/icons.js`.
-- Leaflet with OpenStreetMap data (CARTO Voyager tiles) for the explore map, the location map in each destination and the planner's route map. Loaded only when a map is on screen.
+- Leaflet with OpenStreetMap data (Esri light grey canvas tiles, no API key needed) for the explore map, the location map in each destination and the planner's route map. Loaded only when a map is on screen.
 - Photos from Wikimedia Commons. They show the actual places, the links are stable, and the licences allow reuse with credit.
 - Google Fonts: Young Serif (display), Instrument Sans (body), Caveat (handwritten labels).
 
