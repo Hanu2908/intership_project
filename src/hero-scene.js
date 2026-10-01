@@ -326,45 +326,80 @@ function start() {
   }
 
   // ---------- foreground grass ----------
-  const grass = { z: -2.6, mesh: new Mesh(new BufferGeometry(), new MeshBasicMaterial({ vertexColors: true, side: DoubleSide })) };
-  grass.mesh.position.z = grass.z;
-  scene.add(grass.mesh);
+  // Two layers of individual blades. The sway runs in the vertex shader: a steady
+  // ripple plus slow gusts that roll across the field from left to right.
+  const grassVert = `
+    attribute float aTip; attribute float aPhase; attribute float aBlade;
+    uniform float uTime; uniform float uH; uniform float uSway;
+    varying float vTip; varying float vX;
+    void main(){
+      vec3 p = position;
+      vTip = aTip; vX = p.x / uH;
+      float gust = pow(0.5 + 0.5 * sin(uTime * 0.55 - p.x / uH * 2.2), 3.0);
+      float ripple = sin(uTime * 2.1 + aPhase + p.x / uH * 9.0);
+      float bend = (ripple * 0.35 + gust * 1.1) * aBlade * uSway * aTip;
+      p.x += bend * uH;
+      p.y -= abs(bend) * uH * 0.35;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+    }`;
+  const grassFrag = `
+    uniform vec3 uRoot, uTipCol, uWarm; uniform float uSunX;
+    varying float vTip; varying float vX;
+    void main(){
+      float sun = exp(-abs(vX - uSunX) * 1.6);
+      vec3 tip = mix(uTipCol, uWarm, 0.25 + 0.6 * sun);
+      vec3 c = mix(uRoot, tip, smoothstep(0.05, 1.0, vTip));
+      gl_FragColor = vec4(c, 1.0);
+      #include <colorspace_fragment>
+    }`;
+  const GRASS = [
+    { z: -3.6, density: 0.0042, base: 0.05, edge: 0.1, sway: 0.05, seed: 21, col: ["#2d225c", "#8a68ad", "#f0a283"] },
+    { z: -2.4, density: 0.0034, base: 0.07, edge: 0.15, sway: 0.065, seed: 7, col: ["#120d29", "#4b3577", "#c97a7f"] },
+  ];
+  GRASS.forEach((G) => {
+    G.mesh = new Mesh(new BufferGeometry(), new ShaderMaterial({
+      vertexShader: grassVert, fragmentShader: grassFrag, side: DoubleSide,
+      uniforms: { uTime: { value: 0 }, uH: { value: 1 }, uSway: { value: G.sway }, uSunX: { value: 0 },
+        uRoot: { value: new Color(G.col[0]) }, uTipCol: { value: new Color(G.col[1]) }, uWarm: { value: new Color(G.col[2]) } },
+    }));
+    G.mesh.position.z = G.z;
+    scene.add(G.mesh);
+  });
   function buildGrass() {
-    const { w, h } = viewAt(grass.z);
-    const W = w * 1.3;
-    const N = Math.round(W / (h * 0.006));
-    const pos = new Float32Array((N + 1) * 2 * 3);
-    const col = new Float32Array((N + 1) * 2 * 3);
-    const tip = new Color("#2c2158"), root = new Color("#120d29"), warm = new Color("#6a3e64");
-    const base = -h * 0.5;
-    grass.tips = [];
-    for (let i = 0; i <= N; i++) {
-      const x = -W / 2 + (W * i) / N;
-      const u = x / h;
-      // taller tufts towards the edges so the centre stays clear
-      const edge = Math.min(1, Math.abs(u / (w / h) * 2) * 1.1);
-      const swell = 0.03 + 0.09 * Math.pow(edge, 2) + 0.03 * vnoise(u * 3, 7);
-      const ty = i % 2 ? base + h * 0.02 : base + h * (0.02 + swell * (0.55 + 0.45 * hash(i, 5)));
-      const k = i * 6;
-      pos[k] = x; pos[k + 1] = ty; pos[k + 2] = 0;
-      pos[k + 3] = x; pos[k + 4] = base - h * 0.1; pos[k + 5] = 0;
-      const c = tmp.a.copy(tip).lerp(warm, i % 2 ? 0 : 0.35 * edge);
-      col[k] = c.r; col[k + 1] = c.g; col[k + 2] = c.b;
-      col[k + 3] = root.r; col[k + 4] = root.g; col[k + 5] = root.b;
-      if (!(i % 2)) grass.tips.push({ k, x, amp: (ty - base) / h });
-    }
-    const idx = [];
-    for (let i = 0; i < N; i++) {
-      const a = i * 2, b = (i + 1) * 2;
-      idx.push(a, a + 1, b, b, a + 1, b + 1);
-    }
-    const g = grass.mesh.geometry;
-    grass.pos = new Float32BufferAttribute(pos, 3);
-    g.setAttribute("position", grass.pos);
-    g.setAttribute("color", new Float32BufferAttribute(col, 3));
-    g.setIndex(idx);
-    g.computeBoundingSphere();
-    grass.h = h;
+    GRASS.forEach((G) => {
+      const { w, h } = viewAt(G.z);
+      const W = w * 1.3;
+      const N = Math.round(W / (h * G.density));
+      const pos = [], tip = [], phase = [], blade = [], idx = [];
+      const bottom = -h * 0.5 - h * 0.08;
+      for (let i = 0; i < N; i++) {
+        const r1 = hash(i, G.seed), r2 = hash(i + 1, G.seed + 3), r3 = hash(i + 2, G.seed + 9);
+        const x = -W / 2 + (W * (i + r1 * 0.8)) / N;
+        const u = x / h;
+        const edge = Math.min(1, Math.abs(u / (w / h)) * 2.2);
+        const clump = 0.55 + 0.45 * vnoise(u * 4 + G.seed, G.seed);
+        const height = h * (G.base + G.edge * Math.pow(edge, 1.6)) * clump * (0.55 + 0.6 * r2);
+        const halfW = h * (0.0055 + 0.0045 * r3);
+        const lean = (r1 - 0.5) * height * 0.35;
+        const v = pos.length / 3;
+        pos.push(x - halfW, bottom, 0, x + halfW, bottom, 0, x + lean, -h * 0.5 + height, 0);
+        tip.push(0, 0, 1);
+        phase.push(0, 0, r2 * 6.28);
+        const b = 0.6 + 0.8 * (height / h) / (G.base + G.edge);
+        blade.push(b, b, b);
+        idx.push(v, v + 1, v + 2);
+      }
+      const g = G.mesh.geometry;
+      g.setAttribute("position", new Float32BufferAttribute(pos, 3));
+      g.setAttribute("aTip", new Float32BufferAttribute(tip, 1));
+      g.setAttribute("aPhase", new Float32BufferAttribute(phase, 1));
+      g.setAttribute("aBlade", new Float32BufferAttribute(blade, 1));
+      g.setIndex(idx);
+      g.computeBoundingSphere();
+      const U = G.mesh.material.uniforms;
+      U.uH.value = h;
+      U.uSunX.value = ((SUN.x - 0.5) * w) / h;
+    });
   }
 
   // ---------- birds ----------
@@ -476,13 +511,7 @@ function start() {
       b.scale.y = d.s * Math.sin(s * d.f + d.p);
     });
 
-    if (grass.tips) {
-      const a = grass.pos.array;
-      grass.tips.forEach((tp) => {
-        a[tp.k] = tp.x + Math.sin(s * 1.4 + tp.x * 0.7) * grass.h * 0.012 * tp.amp * 8;
-      });
-      grass.pos.needsUpdate = true;
-    }
+    GRASS.forEach((G) => (G.mesh.material.uniforms.uTime.value = s));
 
     const p = dust.geometry.attributes.position;
     for (let i = 0; i < DUST; i++) {
