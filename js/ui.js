@@ -67,7 +67,9 @@
         const d = Math.abs((center ? left(s) + s.offsetWidth / 2 : left(s)) - ref);
         if (d < bd) { bd = d; best = i; }
       });
-      if (!center && track.scrollLeft + track.clientWidth >= track.scrollWidth - 4) best = slides.length - 1;
+      const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 4;
+      track.classList.toggle("at-end", atEnd);
+      if (!center && atEnd) best = slides.length - 1;
       current = best;
       slides.forEach((s, i) => s.classList.toggle("is-active", i === best));
       if (dots) $$("button", dots).forEach((d, i) => d.setAttribute("aria-current", i === best));
@@ -124,6 +126,8 @@
     return map;
   }
   const pin = (label = "", cls = "") => window.L.divIcon({ className: `pin ${cls}`, html: `<span>${label}</span>`, iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -16] });
+  // Free Google Maps embed (no API key) for a single place
+  const gembed = (d) => `https://maps.google.com/maps?q=${encodeURIComponent(`${d.name}, ${d.state}, India`)}&z=${d.region === "Islands" ? 9 : 10}&output=embed`;
   const gmaps = (d) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.name + ", " + d.state)}`;
 
   // Broken image: hide it, the frame behind shows a gradient
@@ -208,7 +212,7 @@
             <li>${icon("car")}<span>${esc(d.reach.road)}</span></li>
           </ul>
           <h3>On the map</h3>
-          <div class="map map--sm" id="dest-map" role="region" aria-label="Map of ${esc(d.name)}"></div>
+          <iframe class="map map--sm map--embed" src="${gembed(d)}" title="Google map of ${esc(d.name)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
           <p class="fine" style="margin-top:.5rem"><a href="${gmaps(d)}" target="_blank" rel="noopener">Open in Google Maps</a> for directions.</p>
           <h3>Worth your time</h3>
           <ul class="ticks">${d.things.map((t) => `<li>${icon("check")}${esc(t)}</li>`).join("")}</ul>
@@ -230,10 +234,6 @@
       </div>`,
       { cls: "modal--wide", label: d.name }
     );
-    makeMap($("#dest-map", dlg), { center: [d.lat, d.lng], zoom: 7 }).then((map) => {
-      window.L.marker([d.lat, d.lng], { icon: pin("", "pin--dot") }).addTo(map).bindTooltip(d.name, { direction: "top", offset: [0, -14] });
-      setTimeout(() => map.invalidateSize(), 250);
-    }).catch(() => ($("#dest-map", dlg).innerHTML = `<p class="fine" style="padding:1rem">Map couldn't load. <a href="${gmaps(d)}">Open in Google Maps</a>.</p>`));
     const tripBtn = $("[data-trip]", dlg);
     const paint = () => {
       const on = Store.inTrip(d.id);
