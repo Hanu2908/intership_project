@@ -1,0 +1,15 @@
+{
+  "name": "pathik",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Pathik: trip planner for India (internship project)",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "serve": "python3 -m http.server 5173"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.0",
+    "lucide-static": "0.469.0",
+    "three": "0.169.0"
+  }
+}

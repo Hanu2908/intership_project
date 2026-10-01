@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- @include head -->
+<title>Plan & budget · Pathik</title>
+<meta name="description" content="Build a dated, day-by-day India itinerary and see a live budget split into stay, food, transport, activities and travel between stops.">
+</head>
+<body data-page="planner">
+<!-- @include header -->
+
+<main id="main">
+  <header class="page-hero">
+    <!-- @include ridges -->
+    <div class="wrap">
+      <span class="kicker">Plan and budget</span>
+      <h1>Line up the days. Watch the money.</h1>
+      <p>Change a night, a traveller or your travel style and every number below updates. Travel between stops is included; getting to your first stop isn't.</p>
+    </div>
+  </header>
+
+  <div class="wrap planner">
+    <div>
+      <p class="print-title">My Pathik trip</p>
+      <section class="panel" aria-labelledby="route-title">
+        <div class="panel__head">
+          <h2 id="route-title">Your route</h2>
+          <div class="toolbar__right no-print">
+            <label class="sr-only" for="add-stop">Add a stop</label>
+            <select id="add-stop"></select>
+          </div>
+        </div>
+        <div id="route" class="route"></div>
+      </section>
+
+      <section class="panel no-print" aria-labelledby="details-title">
+        <div class="panel__head"><h2 id="details-title">Trip details</h2></div>
+        <div class="settings">
+          <div class="field">
+            <label for="start">Start date</label>
+            <input type="date" id="start">
+          </div>
+          <div class="field">
+            <span class="label" id="style-label">Travel style</span>
+            <div class="seg" role="radiogroup" aria-labelledby="style-label" id="style"></div>
+          </div>
+        </div>
+        <p class="fine" id="style-note"></p>
+        <div class="settings" id="people" style="margin-top:.6rem"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="days-title">
+        <div class="panel__head"><h2 id="days-title">Day by day</h2><span class="pill" id="days-pill"></span></div>
+        <div class="warnings" id="warnings"></div>
+        <ol class="days" id="days"></ol>
+      </section>
+    </div>
+
+    <aside class="panel summary" aria-labelledby="sum-title">
+      <h2 id="sum-title" class="label" style="font-family:var(--sans);font-size:.85rem;text-transform:uppercase;letter-spacing:.06em">Estimated total</h2>
+      <p class="summary__total" id="total" aria-live="polite">₹0</p>
+      <p class="summary__pp" id="pp"></p>
+      <div class="bars" id="bars"></div>
+      <div class="target no-print">
+        <label class="label" for="target">My budget for the whole trip</label>
+        <div class="target__row" style="margin-top:.35rem">
+          <input type="number" id="target" min="0" step="1000" inputmode="numeric" placeholder="e.g. 60000">
+        </div>
+        <div class="meter" id="meter"><i></i></div>
+        <p class="target__msg" id="target-msg"></p>
+      </div>
+      <div class="summary__actions">
+        <a class="btn btn--ember" href="agents.html" id="send"><span data-icon="send"></span>Send to an agent</a>
+        <button class="btn btn--line btn--sm" type="button" id="copy"><span data-icon="copy"></span>Copy</button>
+        <button class="btn btn--line btn--sm" type="button" id="print"><span data-icon="printer"></span>Print</button>
+      </div>
+      <button class="link-btn no-print" type="button" id="reset" style="margin-top:1rem;color:var(--muted)"><span data-icon="trash-2"></span>Clear trip</button>
+    </aside>
+  </div>
+  <a class="mbar no-print" href="#sum-title" id="mbar"><span>Estimated total</span><strong id="mbar-total">₹0</strong><span data-icon="chevron-down"></span></a>
+</main>
+
+<!-- @include footer -->
+<!-- @include scripts -->
+<script src="js/planner.js" defer></script>
+</body>
+</html>

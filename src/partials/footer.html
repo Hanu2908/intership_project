@@ -1,0 +1,57 @@
+<footer class="site-foot">
+  <svg class="ridges" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 70V44l120-26 110 30 150-40 140 34 110-22 160 36 130-48 170 40 120-18 130 30 100-10V70Z" fill="#1c1638"/></svg>
+  <div class="wrap foot-grid">
+    <div class="foot-brand">
+      <a class="brand" href="index.html"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="26" cy="15" r="7" fill="#ffc46b"/><path d="M2 34 14 16l6 8 5-6 13 16Z" fill="#b9a8e6"/><path d="M2 34 14 16l4 6-6 12Z" fill="#ef7d42"/></svg>Pathik</a>
+      <p>Find a place, learn what it really costs, plan the days, then send the whole thing to one registered agent.</p>
+    </div>
+    <div>
+      <h4>Plan</h4>
+      <ul>
+        <li><a href="explore.html">Destinations</a></li>
+        <li><a href="planner.html">Trip planner</a></li>
+        <li><a href="packages.html">Packages</a></li>
+        <li><a href="agents.html">Agents</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Project</h4>
+      <ul>
+        <li><a href="docs/RESEARCH.md">Research</a></li>
+        <li><a href="docs/PLAN.md">Plan</a></li>
+        <li><a href="#" data-open-cart data-tab="bookings">My bookings</a></li>
+      </ul>
+    </div>
+    <div class="foot-nl">
+      <h4>Season notes, once a month</h4>
+      <form class="nl" id="newsletter" novalidate>
+        <div class="field">
+          <label class="sr-only" for="nl-email">Email</label>
+          <input id="nl-email" type="email" placeholder="you@example.com" autocomplete="email" required data-req="Add your email first.">
+          <p class="field__err" id="nl-email-err"></p>
+        </div>
+        <button class="btn btn--ember" type="submit">Subscribe</button>
+      </form>
+    </div>
+  </div>
+  <div class="wrap foot-base">
+    <p>© <span id="year">2026</span> Pathik. Internship project on tourism. Prices are estimates; agents and reviews are samples.</p>
+    <p>Photos <a href="https://unsplash.com">Unsplash</a> · Icons <a href="https://lucide.dev">Lucide</a> · 3D <a href="https://threejs.org">Three.js</a></p>
+  </div>
+</footer>
+
+<div class="drawer" id="drawer" hidden>
+  <aside class="drawer__panel" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+    <div class="drawer__head">
+      <h2 id="drawer-title">Your bag</h2>
+      <button class="icon-btn drawer__close" type="button" aria-label="Close"><span data-icon="x"></span></button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="cart" aria-selected="true">Cart <span id="drawer-cart-n">0</span></button>
+      <button type="button" role="tab" data-tab="bookings" aria-selected="false">Bookings <span id="drawer-book-n">0</span></button>
+    </div>
+    <div class="drawer__body" id="drawer-body" data-tab="cart"></div>
+    <div class="drawer__foot" id="drawer-foot"></div>
+  </aside>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>

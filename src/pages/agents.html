@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- @include head -->
+<title>Ask an agent · Pathik</title>
+<meta name="description" content="Send one enquiry, with your planned trip attached, to a registered local travel agent and track it until the quote arrives.">
+</head>
+<body data-page="agents">
+<!-- @include header -->
+
+<main id="main">
+  <header class="page-hero">
+    <!-- @include ridges -->
+    <div class="wrap">
+      <span class="kicker">Enquire</span>
+      <h1>One enquiry. The whole plan attached.</h1>
+      <p>No re-typing your dates to five people on WhatsApp. Pick a registered agent, send your trip, and follow it here until the quote comes back.</p>
+    </div>
+  </header>
+
+  <div class="wrap agents-layout">
+    <div>
+      <div class="row-head" style="margin-bottom:1.2rem">
+        <div>
+          <h2 style="font-size:1.9rem">Registered agents</h2>
+          <p class="fine">Sample agents for this project. Every one shows a state registration number, reply time and languages.</p>
+        </div>
+        <div class="toolbar__right">
+          <label class="sr-only" for="ag-sort">Sort agents</label>
+          <select id="ag-sort">
+            <option value="reply">Fastest reply</option>
+            <option value="rating">Highest rated</option>
+            <option value="reviews">Most reviewed</option>
+          </select>
+        </div>
+      </div>
+      <div class="chips" id="ag-region" role="group" aria-label="Region" style="margin-bottom:1rem"></div>
+      <div class="agent-list" id="agents"></div>
+
+      <section id="tracker" style="margin-top:3.5rem" aria-labelledby="tr-title">
+        <div class="row-head" style="margin-bottom:1rem">
+          <div>
+            <h2 id="tr-title" style="font-size:1.9rem">Your enquiries</h2>
+            <p class="fine">Replies are simulated for the demo and arrive within about a minute.</p>
+          </div>
+        </div>
+        <div class="tickets" id="tickets" aria-live="polite"></div>
+      </section>
+    </div>
+
+    <aside class="panel enquiry" id="enquiry" aria-labelledby="enq-title">
+      <h2 id="enq-title" style="font-size:1.7rem;margin-bottom:1rem">Send an enquiry</h2>
+      <form id="enq-form" novalidate>
+        <div class="field">
+          <label for="e-agent">Agent</label>
+          <select id="e-agent" required data-req="Choose an agent."></select>
+          <p class="field__err" id="e-agent-err"></p>
+        </div>
+        <div id="attached"></div>
+        <div class="grid-2">
+          <div class="field"><label for="e-name">Your name</label><input id="e-name" type="text" autocomplete="name" required minlength="3"><p class="field__err" id="e-name-err"></p></div>
+          <div class="field"><label for="e-phone">Mobile</label><input id="e-phone" type="tel" autocomplete="tel" inputmode="numeric" placeholder="98xxxxxxxx" required><p class="field__err" id="e-phone-err"></p></div>
+        </div>
+        <div class="field"><label for="e-email">Email</label><input id="e-email" type="email" autocomplete="email" required><p class="field__err" id="e-email-err"></p></div>
+        <div class="grid-2">
+          <div class="field"><label for="e-date">Rough start date</label><input id="e-date" type="date" required data-req="Pick a rough date."><p class="field__err" id="e-date-err"></p></div>
+          <div class="field">
+            <label for="e-budget">Budget per person</label>
+            <select id="e-budget">
+              <option value="15000">Under ₹20,000</option>
+              <option value="30000" selected>₹20,000 to ₹40,000</option>
+              <option value="55000">₹40,000 to ₹70,000</option>
+              <option value="90000">Above ₹70,000</option>
+            </select>
+          </div>
+        </div>
+        <fieldset class="field" style="border:0;padding:0;margin:0 0 .9rem">
+          <legend class="label" style="margin-bottom:.35rem">Best way to reach you</legend>
+          <div class="seg" role="radiogroup" id="e-contact">
+            <button type="button" role="radio" aria-checked="true" data-c="WhatsApp">WhatsApp</button>
+            <button type="button" role="radio" aria-checked="false" data-c="Call">Call</button>
+            <button type="button" role="radio" aria-checked="false" data-c="Email">Email</button>
+          </div>
+        </fieldset>
+        <div class="field">
+          <label for="e-msg">Message</label>
+          <textarea id="e-msg" rows="3" placeholder="What matters on this trip? Kids, food, pace, a special occasion..."></textarea>
+          <p class="field__err" id="e-msg-err"></p>
+        </div>
+        <button class="btn btn--ember btn--block" type="submit"><span data-icon="send"></span>Send enquiry</button>
+        <p class="fine center" style="margin-top:.6rem">Your details go only to the agent you pick.</p>
+      </form>
+    </aside>
+  </div>
+</main>
+
+<!-- @include footer -->
+<!-- @include scripts -->
+<script src="js/agents.js" defer></script>
+</body>
+</html>

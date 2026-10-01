@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- @include head -->
+<title>Explore destinations · Pathik</title>
+<meta name="description" content="Search 14 Indian destinations by month, region, trip type and daily budget. See best seasons, how to get there, costs and local scams.">
+</head>
+<body data-page="explore">
+<!-- @include header -->
+
+<main id="main">
+  <header class="page-hero">
+    <!-- @include ridges -->
+    <div class="wrap">
+      <span class="kicker">Find, then learn</span>
+      <h1>Where should you go?</h1>
+      <p>Filter by the month you can travel and what you want to spend. Open any place for its season, routes, daily costs and the scams locals warn about.</p>
+    </div>
+  </header>
+
+  <section class="filters" aria-label="Filters">
+    <div class="wrap">
+      <div class="filters__top">
+        <div class="search">
+          <span data-icon="search"></span>
+          <label class="sr-only" for="q">Search destinations</label>
+          <input id="q" type="search" placeholder="Search by place, state or idea, e.g. 'houseboat'" autocomplete="off">
+        </div>
+        <div>
+          <label class="sr-only" for="month">Travel month</label>
+          <select id="month"><option value="">Any month</option></select>
+        </div>
+        <div>
+          <label class="sr-only" for="level">Travel style</label>
+          <select id="level">
+            <option value="budget">Backpacker prices</option>
+            <option value="mid" selected>Comfort prices</option>
+            <option value="premium">Premium prices</option>
+          </select>
+        </div>
+        <div>
+          <label class="sr-only" for="max">Daily budget</label>
+          <select id="max">
+            <option value="">Any daily budget</option>
+            <option value="2500">Under ₹2,500 a day</option>
+            <option value="4000">Under ₹4,000 a day</option>
+            <option value="6000">Under ₹6,000 a day</option>
+            <option value="10000">Under ₹10,000 a day</option>
+          </select>
+        </div>
+      </div>
+      <div class="filters__chips">
+        <div class="chips" id="regions" role="group" aria-label="Region"></div>
+        <div class="chips" id="types" role="group" aria-label="Trip type"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" aria-live="polite">
+    <div class="result-bar">
+      <p id="count"></p>
+      <div class="toolbar__right">
+        <label class="sr-only" for="sort">Sort</label>
+        <select id="sort">
+          <option value="season">In season first</option>
+          <option value="cheap">Cheapest per day</option>
+          <option value="name">A to Z</option>
+        </select>
+        <button class="btn btn--line btn--sm" type="button" id="clear" hidden><span data-icon="rotate-ccw"></span>Clear</button>
+      </div>
+    </div>
+    <div class="grid-cards" id="grid"></div>
+  </section>
+</main>
+
+<!-- @include footer -->
+<!-- @include scripts -->
+<script src="js/explore.js" defer></script>
+</body>
+</html>
