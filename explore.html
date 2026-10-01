@@ -1,0 +1,175 @@
+<!-- Generated from src/pages/explore.html. Edit the source, then run npm run build. -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1c1638">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://images.unsplash.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Instrument+Sans:wght@400..700&family=Young+Serif&display=swap">
+<link rel="stylesheet" href="css/main.css">
+<title>Explore destinations · Pathik</title>
+<meta name="description" content="Search 14 Indian destinations by month, region, trip type and daily budget. See best seasons, how to get there, costs and local scams.">
+</head>
+<body data-page="explore">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head">
+  <div class="wrap head-row">
+    <a class="brand" href="index.html" aria-label="Pathik home">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="26" cy="15" r="7" fill="#ffc46b"/><path d="M2 34 14 16l6 8 5-6 13 16Z" fill="#b9a8e6"/><path d="M2 34 14 16l4 6-6 12Z" fill="#ef7d42"/></svg>
+      Pathik
+    </a>
+    <nav class="nav" id="nav" aria-label="Main">
+      <a href="index.html" data-nav="index">Home</a>
+      <a href="explore.html" data-nav="explore" aria-current="page">Explore</a>
+      <a href="planner.html" data-nav="planner">Plan & budget</a>
+      <a href="packages.html" data-nav="packages">Packages</a>
+      <a href="agents.html" data-nav="agents">Agents</a>
+    </nav>
+    <div class="head-actions">
+      <a class="icon-btn" href="planner.html" aria-label="My trip"><span data-icon="map"></span><span class="badge" data-count="trip" hidden>0</span></a>
+      <button class="icon-btn" type="button" data-open-cart aria-label="Cart"><span data-icon="shopping-bag"></span><span class="badge" data-count="cart" hidden>0</span></button>
+      <a class="btn btn--ghost btn--sm head-cta" href="agents.html">Ask an agent</a>
+      <button class="icon-btn burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="nav"><span data-icon="menu"></span></button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <header class="page-hero">
+    <svg class="ridges" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true">
+  <path d="M0 150 140 90l90 40 120-80 110 70 90-30 140 90 120-70 110 40 150-110 130 90 110-30 130 60v160H0Z" fill="#8f73c4" opacity=".55"/>
+  <path d="M0 200 120 160l140 50 110-60 150 70 100-40 160 60 130-80 150 70 120-40 160 60v130H0Z" fill="#5b469e" opacity=".8"/>
+  <path d="M0 250 160 220l130 40 170-50 140 50 160-30 150 40 170-50 150 40 210-20v80H0Z" fill="#2b2160"/>
+  <path d="M0 290 200 270l180 30 220-26 200 26 240-22 200 20 200-14v36H0Z" fill="#f8f4ee"/>
+</svg>
+    <div class="wrap">
+      <span class="kicker">Find, then learn</span>
+      <h1>Where should you go?</h1>
+      <p>Filter by the month you can travel and what you want to spend. Open any place for its season, routes, daily costs and the scams locals warn about.</p>
+    </div>
+  </header>
+
+  <section class="filters" aria-label="Filters">
+    <div class="wrap">
+      <div class="filters__top">
+        <div class="search">
+          <span data-icon="search"></span>
+          <label class="sr-only" for="q">Search destinations</label>
+          <input id="q" type="search" placeholder="Search by place, state or idea, e.g. 'houseboat'" autocomplete="off">
+        </div>
+        <div>
+          <label class="sr-only" for="month">Travel month</label>
+          <select id="month"><option value="">Any month</option></select>
+        </div>
+        <div>
+          <label class="sr-only" for="level">Travel style</label>
+          <select id="level">
+            <option value="budget">Backpacker prices</option>
+            <option value="mid" selected>Comfort prices</option>
+            <option value="premium">Premium prices</option>
+          </select>
+        </div>
+        <div>
+          <label class="sr-only" for="max">Daily budget</label>
+          <select id="max">
+            <option value="">Any daily budget</option>
+            <option value="2500">Under ₹2,500 a day</option>
+            <option value="4000">Under ₹4,000 a day</option>
+            <option value="6000">Under ₹6,000 a day</option>
+            <option value="10000">Under ₹10,000 a day</option>
+          </select>
+        </div>
+      </div>
+      <div class="filters__chips">
+        <div class="chips" id="regions" role="group" aria-label="Region"></div>
+        <div class="chips" id="types" role="group" aria-label="Trip type"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" aria-live="polite">
+    <div class="result-bar">
+      <p id="count"></p>
+      <div class="toolbar__right">
+        <label class="sr-only" for="sort">Sort</label>
+        <select id="sort">
+          <option value="season">In season first</option>
+          <option value="cheap">Cheapest per day</option>
+          <option value="name">A to Z</option>
+        </select>
+        <button class="btn btn--line btn--sm" type="button" id="clear" hidden><span data-icon="rotate-ccw"></span>Clear</button>
+      </div>
+    </div>
+    <div class="grid-cards" id="grid"></div>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <svg class="ridges" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 70V44l120-26 110 30 150-40 140 34 110-22 160 36 130-48 170 40 120-18 130 30 100-10V70Z" fill="#1c1638"/></svg>
+  <div class="wrap foot-grid">
+    <div class="foot-brand">
+      <a class="brand" href="index.html"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="26" cy="15" r="7" fill="#ffc46b"/><path d="M2 34 14 16l6 8 5-6 13 16Z" fill="#b9a8e6"/><path d="M2 34 14 16l4 6-6 12Z" fill="#ef7d42"/></svg>Pathik</a>
+      <p>Find a place, learn what it really costs, plan the days, then send the whole thing to one registered agent.</p>
+    </div>
+    <div>
+      <h4>Plan</h4>
+      <ul>
+        <li><a href="explore.html">Destinations</a></li>
+        <li><a href="planner.html">Trip planner</a></li>
+        <li><a href="packages.html">Packages</a></li>
+        <li><a href="agents.html">Agents</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Project</h4>
+      <ul>
+        <li><a href="docs/RESEARCH.md">Research</a></li>
+        <li><a href="docs/PLAN.md">Plan</a></li>
+        <li><a href="#" data-open-cart data-tab="bookings">My bookings</a></li>
+      </ul>
+    </div>
+    <div class="foot-nl">
+      <h4>Season notes, once a month</h4>
+      <form class="nl" id="newsletter" novalidate>
+        <div class="field">
+          <label class="sr-only" for="nl-email">Email</label>
+          <input id="nl-email" type="email" placeholder="you@example.com" autocomplete="email" required data-req="Add your email first.">
+          <p class="field__err" id="nl-email-err"></p>
+        </div>
+        <button class="btn btn--ember" type="submit">Subscribe</button>
+      </form>
+    </div>
+  </div>
+  <div class="wrap foot-base">
+    <p>© <span id="year">2026</span> Pathik. Internship project on tourism. Prices are estimates; agents and reviews are samples.</p>
+    <p>Photos <a href="https://unsplash.com">Unsplash</a> · Icons <a href="https://lucide.dev">Lucide</a> · 3D <a href="https://threejs.org">Three.js</a></p>
+  </div>
+</footer>
+
+<div class="drawer" id="drawer" hidden>
+  <aside class="drawer__panel" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+    <div class="drawer__head">
+      <h2 id="drawer-title">Your bag</h2>
+      <button class="icon-btn drawer__close" type="button" aria-label="Close"><span data-icon="x"></span></button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="cart" aria-selected="true">Cart <span id="drawer-cart-n">0</span></button>
+      <button type="button" role="tab" data-tab="bookings" aria-selected="false">Bookings <span id="drawer-book-n">0</span></button>
+    </div>
+    <div class="drawer__body" id="drawer-body" data-tab="cart"></div>
+    <div class="drawer__foot" id="drawer-foot"></div>
+  </aside>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<script src="js/data.js" defer></script>
+<script src="js/icons.js" defer></script>
+<script src="js/store.js" defer></script>
+<script src="js/budget.js" defer></script>
+<script src="js/ui.js" defer></script>
+<script src="js/explore.js" defer></script>
+</body>
+</html>
