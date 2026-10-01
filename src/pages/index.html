@@ -75,6 +75,26 @@
     </div>
   </section>
 
+  <section class="section picks" aria-labelledby="picks-title">
+    <div class="wrap">
+      <div class="row-head reveal">
+        <div>
+          <span class="kicker" id="picks-kicker">In season now</span>
+          <h2 id="picks-title">Where the weather is on your side</h2>
+        </div>
+        <a class="link-btn" href="explore.html" id="picks-all">See all in season <span data-icon="arrow-right"></span></a>
+      </div>
+    </div>
+    <div class="carousel picks__carousel" id="picks" aria-roledescription="carousel" aria-label="Destinations in season">
+      <div class="carousel__track picks__track" data-align="center" tabindex="0"></div>
+      <div class="wrap carousel__nav">
+        <div class="dots" aria-label="Choose slide"></div>
+        <button class="icon-btn" type="button" data-prev aria-label="Previous destination"><span data-icon="chevron-left"></span></button>
+        <button class="icon-btn" type="button" data-next aria-label="Next destination"><span data-icon="chevron-right"></span></button>
+      </div>
+    </div>
+  </section>
+
   <section class="section why" id="how" aria-labelledby="why-title">
     <div class="wrap why__grid">
       <div class="reveal">
@@ -117,15 +137,15 @@
       </div>
       <div class="voices__grid">
         <figure class="voices__card frame reveal">
-          <img src="https://images.unsplash.com/photo-1627938823193-fd13c1c867dd?w=640&h=820&fit=crop&auto=format&q=70" alt="Boats on the Ganga at Varanasi" width="640" height="820" loading="lazy" decoding="async">
+          <span id="voices-img"></span>
           <p>"The estimate said ₹41k. We spent ₹43k."<small>Ananya, after 7 nights in Ladakh</small></p>
         </figure>
         <div class="carousel reveal" id="carousel" aria-roledescription="carousel" aria-label="Traveller reviews">
           <div class="carousel__track" id="track" tabindex="0"></div>
           <div class="carousel__nav">
-            <div class="dots" id="dots" role="tablist" aria-label="Choose review"></div>
-            <button class="icon-btn" type="button" id="prev" aria-label="Previous review"><span data-icon="chevron-left"></span></button>
-            <button class="icon-btn" type="button" id="next" aria-label="Next review"><span data-icon="chevron-right"></span></button>
+            <div class="dots" aria-label="Choose review"></div>
+            <button class="icon-btn" type="button" data-prev aria-label="Previous review"><span data-icon="chevron-left"></span></button>
+            <button class="icon-btn" type="button" data-next aria-label="Next review"><span data-icon="chevron-right"></span></button>
           </div>
         </div>
       </div>
