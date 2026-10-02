@@ -187,7 +187,7 @@ function start() {
   // Each layer is a strip from the ridge line down. Colour is computed per pixel from
   // the depth below the ridge, how much the slope faces the sun, and distance to the sun.
   const LAYERS = [
-    { z: -50, base: 0.02, amp: 0.17, freq: 0.9, seed: 3, peak: { x: 0.12, h: 0.24, w: 0.24 }, snow: 1, haze: 0.55,
+    { z: -50, base: 0.02, amp: 0.17, freq: 0.9, seed: 3, peak: { x: 0.12, h: 0.25, wl: 0.2, wr: 0.3 }, snow: 1, haze: 0.55,
       col: { top: "#7d66b8", lit: "#ffd2a6", base: "#8b72c4", mist: "#e8a3a4" } },
     { z: -36, base: -0.06, amp: 0.15, freq: 1.4, seed: 11, haze: 0.4,
       col: { top: "#5f4b9d", lit: "#f6a27f", base: "#6a54ab", mist: "#c48aa9" } },
@@ -201,39 +201,62 @@ function start() {
   const tmp = { a: new Color() };
 
   const layerVert = `
-    attribute float aLit; attribute float aDepth; attribute float aPeak; attribute float aU;
-    varying float vLit; varying float vDepth; varying float vPeak; varying float vU;
+    attribute float aLit; attribute float aDepth; attribute float aPeak; attribute float aU; attribute float aRidge; attribute float aSide;
+    varying float vLit; varying float vDepth; varying float vPeak; varying float vU; varying float vRidge; varying float vSide;
     void main(){
-      vLit = aLit; vDepth = aDepth; vPeak = aPeak; vU = aU;
+      vLit = aLit; vDepth = aDepth; vPeak = aPeak; vU = aU; vRidge = aRidge; vSide = aSide;
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     }`;
   const layerFrag = `
     uniform vec3 uTop, uLit, uBase, uMist, uHaze;
-    uniform float uSunU, uHazeAmt, uSnow;
-    varying float vLit; varying float vDepth; varying float vPeak; varying float vU;
+    uniform float uSunU, uHazeAmt, uSnow, uSnowAlt, uSeed, uCrestU, uTopAlt;
+    varying float vLit; varying float vDepth; varying float vPeak; varying float vU; varying float vRidge; varying float vSide;
     float h1(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
     float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
       return mix(mix(h1(i), h1(i+vec2(1,0)), f.x), mix(h1(i+vec2(0,1)), h1(i+vec2(1,1)), f.x), f.y); }
     void main(){
       float d = max(vDepth, 0.0);
-      vec3 c = mix(uTop, uBase, smoothstep(0.0, 0.18, d));
-      // soft rim of sunlight along sun-facing ridges, plus a broad warm wash
-      c = mix(c, uLit, vLit * (0.85 * exp(-d / 0.028) + 0.22 * exp(-d / 0.16)));
+      float alt = vRidge - d;            // height of this pixel, in view-height units
+      vec3 c = mix(uTop, uBase, smoothstep(0.0, 0.2, d));
+      // an inner, overlapping hill inside each range gives it depth
+      float inner = vRidge - 0.05 - 0.07 * vn(vec2(vU * 2.6 + uSeed, 1.0)) - 0.03 * vn(vec2(vU * 8.0 + uSeed, 2.0));
+      float below = smoothstep(inner + 0.003, inner - 0.003, alt);
+      c = mix(c, mix(uTop, uBase, 0.4) * 0.93, below * 0.6);
+      c = mix(c, uLit, vLit * 0.4 * below * exp(-max(inner - alt, 0.0) / 0.012));
+      // thin rim of sunlight on sun-facing crests
+      c = mix(c, uLit, vLit * 0.8 * exp(-d / 0.018));
+      // rock and scree texture following the slopes
+      float tex = vn(vec2(vU * 60.0 - alt * 30.0, alt * 9.0)) * 0.6 + vn(vec2(vU * 150.0, alt * 45.0)) * 0.4;
+      c *= 0.95 + 0.1 * tex;
       // glow from the low sun, strongest near its x position and the ridge tops
       float sd = abs(vU - uSunU);
       c = mix(c, uHaze, uHazeAmt * exp(-sd * 2.2) * exp(-d / 0.22));
-      // snow: follows the peak shape, with streaky gullies, warm on the lit side
       if (uSnow > 0.5) {
-        // irregular lower edge: fingers of snow running down the gullies
-        float g = vn(vec2(vU * 20.0, 0.5)) * 0.55 + vn(vec2(vU * 52.0, 7.0)) * 0.3 + vn(vec2(vU * 130.0, 3.0)) * 0.15;
-        float line = vPeak * 0.17 - 0.045 + (g - 0.5) * 0.08;
-        float m = smoothstep(line + 0.005, line - 0.005, d) * smoothstep(0.38, 0.5, vPeak);
-        vec3 snowShade = vec3(0.72, 0.68, 0.93);
-        vec3 snowLit = vec3(1.0, 0.87, 0.76);
-        vec3 snow = mix(snowShade, snowLit, smoothstep(0.05, 0.45, vLit));
-        // faint rock lines and a cooler tone lower down
-        float rock = smoothstep(0.62, 0.8, vn(vec2(vU * 34.0, d * 2.0)));
-        snow = mix(snow, snowShade * 0.82, rock * 0.35 + smoothstep(0.0, 0.08, d) * 0.15);
+        float onPeak = smoothstep(0.02, 0.25, vPeak);
+        float down = max(uTopAlt - alt, 0.0);
+        // angle around the summit: gullies and ribs fan out from the top
+        float ang = atan(vU - uCrestU, down + 0.004);
+        float rib = vn(vec2(ang * 15.0, alt * 1.4)) * 0.7 + vn(vec2(ang * 38.0, alt * 3.0)) * 0.3;
+        // the dividing ridge between the shadow face and the sun face wavers a little
+        // the main ridge runs from the summit down towards the right-hand shoulder
+        float split = (vU - uCrestU) - down * 0.55 + (vn(vec2(alt * 14.0, 4.0)) - 0.5) * 0.04 * smoothstep(0.0, 0.05, down);
+        float face = smoothstep(-0.008, 0.008, split);
+        float relief = 1.0 - 0.55 * smoothstep(0.08, 0.3, down);   // contrast fades into the haze below
+        // rock: cool and dark in shadow, warm in the sun, with ribs
+        vec3 shadowRock = c * vec3(0.74, 0.74, 0.9) * (0.9 + 0.2 * rib);
+        vec3 litRock = mix(c, uLit, 0.42) * (0.9 + 0.2 * rib);
+        c = mix(c, mix(shadowRock, litRock, face), onPeak * relief);
+        // snow by altitude; fingers of snow run further down the gullies
+        float gully = 1.0 - smoothstep(0.3, 0.7, vn(vec2(ang * 11.0, alt * 1.2)));
+        float line = uSnowAlt - gully * 0.06 + (vn(vec2(vU * 20.0, 0.3)) - 0.5) * 0.03;
+        float m = smoothstep(line - 0.006, line + 0.006, alt) * onPeak;
+        // rock ribs poke through the snow, mostly near the snowline
+        m *= 1.0 - smoothstep(0.62, 0.8, rib) * (0.3 + 0.6 * (1.0 - smoothstep(line, line + 0.06, alt)));
+        vec3 snowShade = vec3(0.66, 0.64, 0.9);
+        vec3 snowLit = vec3(1.0, 0.89, 0.8);
+        vec3 snow = mix(snowShade, snowLit, face) * (0.93 + 0.1 * rib);
+        // a touch of alpenglow near the summit on the sun face
+        snow = mix(snow, vec3(1.0, 0.78, 0.7), face * 0.25 * (1.0 - smoothstep(0.0, 0.08, down)));
         c = mix(c, snow, m);
       }
       c = mix(c, uMist, smoothstep(0.08, 0.46, d));
@@ -249,6 +272,10 @@ function start() {
     u.uHazeAmt = { value: L.haze };
     u.uSunU = { value: 0 };
     u.uSnow = { value: L.snow ? 1 : 0 };
+    u.uSnowAlt = { value: 0 };
+    u.uSeed = { value: L.seed * 1.7 };
+    u.uCrestU = { value: 0 };
+    u.uTopAlt = { value: 0 };
     L.mesh = new Mesh(new BufferGeometry(), new ShaderMaterial({ uniforms: u, vertexShader: layerVert, fragmentShader: layerFrag, side: DoubleSide }));
     L.mesh.position.z = L.z;
     scene.add(L.mesh);
@@ -271,10 +298,19 @@ function start() {
     const W = w * 1.35; // overscan for parallax
     const N = Math.max(120, Math.round((W / h) * 140));
     const sunX = (SUN.x - 0.5) * w;
-    const peakAt = (u) => {
+    const peakEnv = (u) => {
       if (!L.peak) return 0;
-      const d = Math.abs(u - L.peak.x * camera.aspect) / L.peak.w;
-      return L.peak.h * Math.pow(Math.max(0, 1 - d), 1.5);
+      const dx = u - L.peak.x * camera.aspect;
+      const d = Math.abs(dx) / (dx < 0 ? L.peak.wl : L.peak.wr);
+      const main = Math.pow(Math.max(0, 1 - d), 1.35);
+      const shoulder = 0.42 * Math.pow(Math.max(0, 1 - Math.abs(dx - L.peak.wr * 0.45) / (L.peak.wr * 0.28)), 1.6);
+      return L.peak.h * Math.max(main, shoulder * 0.9 + main * 0.4);
+    };
+    // rugged outline: noise that scales with the peak so the summit stays sharp
+    const peakAt = (u) => {
+      const e = peakEnv(u);
+      if (!e) return 0;
+      return e * (1 + 0.09 * (ridged(u * 16 + 3, 5, 3) - 0.5)) + 0.012 * (vnoise(u * 40, 9) - 0.5) * (e / L.peak.h);
     };
     const ridgeY = (x) => {
       const u = x / h;
@@ -292,13 +328,19 @@ function start() {
     });
     const lits = smooth(raw, Math.max(2, Math.round(N / 160)), 2);
 
+    // which side of the summit each column is on (for shadow / sun faces)
+    let crest = 0;
+    if (L.peak) ys.forEach((y, i) => { if (Math.abs(xs[i] / h - L.peak.x * camera.aspect) < L.peak.wr && y > ys[crest]) crest = i; });
+    const crestU = xs[crest] / h;
     const pos = new Float32Array((N + 1) * 2 * 3);
+    const aRidge = new Float32Array((N + 1) * 2);
+    const aSide = new Float32Array((N + 1) * 2);
     const aLit = new Float32Array((N + 1) * 2);
     const aDepth = new Float32Array((N + 1) * 2);
     const aPeak = new Float32Array((N + 1) * 2);
     const aU = new Float32Array((N + 1) * 2);
     for (let i = 0; i <= N; i++) {
-      const pk = L.peak ? peakAt(xs[i] / h) / L.peak.h : 0;
+      const pk = L.peak ? peakEnv(xs[i] / h) / L.peak.h : 0;
       for (let r = 0; r < 2; r++) {
         const v = i * 2 + r;
         const y = r === 0 ? ys[i] : bottom;
@@ -307,6 +349,8 @@ function start() {
         aDepth[v] = (ys[i] - y) / h;
         aPeak[v] = pk;
         aU[v] = xs[i] / h;
+        aRidge[v] = ys[i] / h;
+        aSide[v] = Math.tanh((xs[i] / h - crestU) / 0.02);
       }
     }
     const idx = [];
@@ -320,9 +364,17 @@ function start() {
     g.setAttribute("aDepth", new Float32BufferAttribute(aDepth, 1));
     g.setAttribute("aPeak", new Float32BufferAttribute(aPeak, 1));
     g.setAttribute("aU", new Float32BufferAttribute(aU, 1));
+    g.setAttribute("aRidge", new Float32BufferAttribute(aRidge, 1));
+    g.setAttribute("aSide", new Float32BufferAttribute(aSide, 1));
     g.setIndex(idx);
     g.computeBoundingSphere();
     L.mesh.material.uniforms.uSunU.value = sunX / h;
+    if (L.peak) {
+      const U = L.mesh.material.uniforms;
+      U.uTopAlt.value = ys[crest] / h;
+      U.uCrestU.value = crestU;
+      U.uSnowAlt.value = ys[crest] / h - 0.13;
+    }
   }
 
   // ---------- foreground grass ----------
