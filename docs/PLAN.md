@@ -6,7 +6,9 @@ Pathik (पथिक, "wayfarer") is a trip planner for India. One site covers t
 - HTML, CSS, vanilla JavaScript (no framework).
 - Three.js for the hero scene: layered mountain ridges at dusk with birds and drifting dust. Bundled with esbuild into one classic script so the site also opens from `file://`.
 - Lucide icons. Only the icons we use are compiled into `js/icons.js`.
-- Leaflet with Esri light grey canvas tiles (OpenStreetMap data, no API key) for the explore map and the planner's route map, loaded only when a map is on screen. Each destination's detail view uses the free Google Maps embed (no key).
+- India's official outline (Survey of India boundary, from DataMeet's open data, CC BY 4.0), simplified to 37 KB by `scripts/india-map.mjs`. Every map on the site draws this outline itself, because world map tiles show international boundary claims.
+- Leaflet for the explore map and the planner's route map, with the outline as its only layer, loaded when a map is on screen. Each destination's detail view uses the free Google Maps embed (no key).
+- Three.js again for the Season map: the outline extruded into a slab, with a pillar of light per destination.
 - Photos from Wikimedia Commons. They show the actual places, the links are stable, and the licences allow reuse with credit.
 - Google Fonts: Young Serif (display), Instrument Sans (body), Caveat (handwritten labels).
 
@@ -28,18 +30,20 @@ Pathik (पथिक, "wayfarer") is a trip planner for India. One site covers t
 | --- | --- | --- |
 | `index.html` Home | Overview, inspiration | 3D hero, search bar that deep-links into Explore, categories, in-season destination carousel, packages with add-to-cart, testimonial carousel, article reader modal, newsletter form |
 | `explore.html` Explore | F1, F2 | Photo slideshow, text search, region, type, month and budget filters synced to the URL, sort, grid or map view, destination detail modal with a location map, add to trip |
-| `planner.html` Plan | F3, F4 | Route map, reorder stops, nights stepper, start date, travellers, comfort level, budget breakdown bars, target budget meter, day-by-day plan, season warnings, print, copy summary |
+| `season.html` Season map | F1, F2, F3 | Month dial (drag or arrow keys), daily budget slider, travel style, trip type; 3D map where pillar height is season fit and colour is crowd; ranked list; destination card with a quieter twin for packed places; trip route drawn as arcs; share link |
+| `planner.html` Plan | F3, F4 | Route map, reorder stops, nights stepper, start date, travellers, comfort level, budget breakdown bars, target budget meter, day-by-day plan, season warnings, print, copy summary, share link |
 | `packages.html` Book | F6 | Package filters, booking modal (date, travellers), cart drawer, GST line, checkout form with validation, reservation reference |
 | `agents.html` Enquire | F5 | Agent filter, enquiry form with trip attached, validation, enquiry tracker with status timeline |
 
 ## JavaScript modules
-- `js/data.js` destinations, packages, agents, articles, testimonials.
+- `js/data.js` destinations (with monthly crowd levels and quieter twins), packages, agents, articles, testimonials.
+- `js/india-map.js` the official India outline.
 - `js/icons.js` generated Lucide SVG paths and an `icon()` helper.
 - `js/store.js` `localStorage` state (trip, cart, enquiries, bookings) with change events.
 - `js/ui.js` shared header, cart drawer, trip counter, toasts, modals, destination detail, reveal-on-scroll.
 - `js/budget.js` cost model shared by Explore, Plan and the agent form.
 - one script per page.
-- `src/hero-scene.js` Three.js source, built to `js/hero-scene.js`.
+- `src/hero-scene.js` and `src/season-scene.js` Three.js sources, built to `js/`.
 
 ## Cost model (estimates)
 - Each destination stores a per-person daily cost at three comfort levels, split into stay, food, local transport and activities.
@@ -51,7 +55,8 @@ Pathik (पथिक, "wayfarer") is a trip planner for India. One site covers t
 - No render-blocking JS. All scripts use `defer`.
 - Hero shows an SVG illustration first; the Three.js bundle loads on idle and fades in. Rendering pauses when the hero is off-screen or the tab is hidden. Reduced-motion users get one static frame.
 - Images: `loading="lazy"`, explicit sizes, the smallest standard Commons thumbnail that fits (330 to 1920 px) with a 2x `srcset`, a coloured placeholder if an image fails.
-- Leaflet (about 42 KB gzipped) loads on demand.
+- Leaflet (about 42 KB gzipped) and the India outline (about 12 KB gzipped) load on demand.
+- The Season map's 3D bundle (about 140 KB gzipped) loads only on that page and stops drawing when nothing moves.
 
 ## Done when
 - All five pages work on phone and desktop.

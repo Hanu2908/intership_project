@@ -239,6 +239,7 @@
     }
     toast("Trip summary copied", { icon: "copy" });
   });
+  $("#share").addEventListener("click", () => window.UI.shareTrip());
   $("#reset").addEventListener("click", () => {
     if (!trip().stops.length) return;
     if (!confirm("Remove every stop from this trip?")) return;
