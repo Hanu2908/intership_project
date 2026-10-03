@@ -112,14 +112,30 @@
     });
     return leafletReady;
   }
+  // Official outline of India (Survey of India boundary), loaded with the first map
+  let outlineReady;
+  function loadIndia() {
+    if (window.PATHIK_INDIA) return Promise.resolve(window.PATHIK_INDIA);
+    outlineReady = outlineReady || new Promise((res, rej) => {
+      const js = document.createElement("script");
+      js.src = "js/india-map.js";
+      js.onload = () => res(window.PATHIK_INDIA);
+      js.onerror = rej;
+      document.head.appendChild(js);
+    });
+    return outlineReady;
+  }
+  // No tile service: tiled world maps draw international boundary claims. We draw
+  // India's official outline ourselves, so every map on the site shows it correctly.
   async function makeMap(el, opts = {}) {
-    const L = await loadLeaflet();
-    const map = L.map(el, { scrollWheelZoom: false, ...opts });
-    // Esri light grey canvas: free to use with attribution, no API key, works from file:// too
-    const esri = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/";
-    const attribution = 'Tiles &copy; <a href="https://www.esri.com">Esri</a>, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-    L.tileLayer(esri + "World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", { maxZoom: 16, attribution }).addTo(map);
-    L.tileLayer(esri + "World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}", { maxZoom: 16 }).addTo(map);
+    const [L, rings] = await Promise.all([loadLeaflet(), loadIndia()]);
+    el.classList.add("map--india");
+    const map = L.map(el, { scrollWheelZoom: false, minZoom: 4, maxZoom: 9, zoomSnap: 0.5, maxBounds: [[2, 60], [42, 104]], ...opts });
+    map.attributionControl.setPrefix(false);
+    map.attributionControl.addAttribution('India outline: Survey of India boundary, via <a href="https://github.com/datameet/maps">DataMeet</a> (CC BY 4.0)');
+    L.polygon(rings.map((r) => [r.map(([x, y]) => [y, x])]), {
+      color: "#4a3a8f", weight: 1.4, opacity: 0.7, fillColor: "#fbf7f1", fillOpacity: 1, interactive: false,
+    }).addTo(map);
     // the page keeps scrolling over the map; a click turns on wheel zoom
     el.addEventListener("click", () => map.scrollWheelZoom.enable());
     el.addEventListener("mouseleave", () => map.scrollWheelZoom.disable());
@@ -695,5 +711,96 @@
     }
   });
 
-  window.UI = { carousel, makeMap, loadLeaflet, pin, gmaps, creditLine, openCredits, $, $$, esc, rich, icon, hydrate, photo, toast, modal, closeModal, monthStrip, openDestination, openBooking, packageCard, openDrawer, cartTotals, stepper, bindSteppers, validate, liveValidate, field, reveal, fmtDate, empty };
+  // ---------- share a trip as a link ----------
+  // The whole trip lives in the URL: planner.html?trip=manali.3-tirthan.2&a=2&c=0&lv=mid&s=2026-12-10
+  function tripLink(trip = Store.get().trip) {
+    const p = new URLSearchParams();
+    p.set("trip", trip.stops.map((s) => `${s.id}.${s.nights}`).join("-"));
+    p.set("a", trip.adults);
+    if (trip.children) p.set("c", trip.children);
+    p.set("lv", trip.level);
+    if (trip.start) p.set("s", trip.start);
+    return new URL(`planner.html?${p}`, location.href).href;
+  }
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (e) {
+      const ta = Object.assign(document.createElement("textarea"), { value: text });
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+    }
+  }
+  async function shareTrip() {
+    const trip = Store.get().trip;
+    if (!trip.stops.length) return toast("Add a place to your trip first", { icon: "info" });
+    const url = tripLink(trip);
+    const names = trip.stops.map((s) => Budget.byId(s.id)?.name).filter(Boolean);
+    const text = `My trip plan on Pathik: ${names.join(" → ")}`;
+    if (navigator.share && matchMedia("(pointer: coarse)").matches) {
+      try { return await navigator.share({ title: "Pathik trip", text, url }); } catch (e) { if (e.name === "AbortError") return; }
+    }
+    const dlg = modal(`
+      <div class="share">
+        <h2>Share this trip</h2>
+        <p>Anyone with the link sees the same stops, nights, travellers and style. Agents get it straight into their enquiry form.</p>
+        <label class="sr-only" for="share-url">Trip link</label>
+        <input id="share-url" class="share__url" type="text" readonly value="${esc(url)}">
+        <div class="share__actions">
+          <button class="btn btn--ember" type="button" id="share-copy">${icon("copy")}Copy link</button>
+          <a class="btn btn--line" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}">${icon("message-circle")}WhatsApp</a>
+        </div>
+      </div>`, { cls: "modal--narrow", label: "Share this trip" });
+    const input = $("#share-url", dlg);
+    input.addEventListener("focus", () => input.select());
+    $("#share-copy", dlg).addEventListener("click", async () => {
+      await copyText(url);
+      toast("Link copied", { icon: "copy" });
+    });
+  }
+  // Open a shared link: load its trip, asking first if it would replace one
+  (function importTrip() {
+    const qs = new URLSearchParams(location.search);
+    const raw = qs.get("trip");
+    if (!raw) return;
+    const num = (k, lo, hi, d) => { const v = Math.round(+qs.get(k)); return qs.has(k) && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
+    const stops = raw.split("-").map((x) => {
+      const [id, n] = x.split(".");
+      const d = Budget.byId(id);
+      const v = Math.round(+n);
+      return d ? { id, nights: Number.isFinite(v) && v >= 1 ? Math.min(14, v) : d.nights } : null;
+    }).filter(Boolean).filter((s, i, arr) => arr.findIndex((x) => x.id === s.id) === i);
+    const shared = {
+      adults: num("a", 1, 12, 2),
+      children: num("c", 0, 10, 0),
+      level: ["budget", "mid", "premium"].includes(qs.get("lv")) ? qs.get("lv") : "mid",
+      start: /^\d{4}-\d{2}-\d{2}$/.test(qs.get("s") || "") ? qs.get("s") : "",
+    };
+    // tidy the address bar so a reload doesn't ask again
+    ["trip", "a", "c", "lv", "s"].forEach((k) => qs.delete(k));
+    history.replaceState(null, "", location.pathname + (qs.toString() ? `?${qs}` : "") + location.hash);
+    if (!stops.length) return;
+    const apply = () => {
+      Store.update((s) => Object.assign(s.trip, shared, { stops }));
+      toast(`Shared trip loaded: ${stops.length} stop${stops.length > 1 ? "s" : ""}`, { icon: "check" });
+    };
+    const cur = Store.get().trip.stops;
+    const same = cur.length === stops.length && cur.every((s, i) => s.id === stops[i].id && s.nights === stops[i].nights);
+    if (!cur.length || same) return apply();
+    const names = stops.map((s) => Budget.byId(s.id).name).join(" → ");
+    const dlg = modal(`
+      <div class="share">
+        <h2>Open a shared trip?</h2>
+        <p>Someone shared <strong>${esc(names)}</strong>. Loading it replaces your current trip of ${cur.length} stop${cur.length > 1 ? "s" : ""}.</p>
+        <div class="share__actions">
+          <button class="btn btn--ember" type="button" data-close id="share-load">Load shared trip</button>
+          <button class="btn btn--line" type="button" data-close>Keep mine</button>
+        </div>
+      </div>`, { cls: "modal--narrow", label: "Open a shared trip" });
+    $("#share-load", dlg).addEventListener("click", apply);
+  })();
+
+  window.UI = { carousel, shareTrip, tripLink, makeMap, loadLeaflet, loadIndia, pin, gmaps, creditLine, openCredits, $, $$, esc, rich, icon, hydrate, photo, toast, modal, closeModal, monthStrip, openDestination, openBooking, packageCard, openDrawer, cartTotals, stepper, bindSteppers, validate, liveValidate, field, reveal, fmtDate, empty };
 })();

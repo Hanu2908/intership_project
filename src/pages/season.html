@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- @include head -->
+<title>Season map · Pathik</title>
+<meta name="description" content="Turn the dial to a month and set a daily budget. India's map lights up with the places that are in season, affordable and not packed, with quieter alternatives to the crowded ones.">
+</head>
+<body data-page="season">
+<!-- @include header -->
+
+<main id="main">
+  <section class="sm-stage" aria-labelledby="sm-title">
+    <div class="sm-view">
+      <canvas class="sm-canvas" id="sm-canvas" aria-label="3D map of India with a pillar of light for each destination"></canvas>
+      <div class="sm-labels" id="sm-labels" aria-hidden="true"></div>
+      <p class="sm-fallback" id="sm-fallback" hidden>The 3D map needs WebGL. The list still works.</p>
+      <div class="sm-tools">
+        <button class="icon-btn" type="button" id="sm-home" aria-label="Reset view"><span data-icon="locate-fixed"></span></button>
+      </div>
+    </div>
+
+    <div class="sm-side sm-side--left">
+      <span class="kicker">When to go</span>
+      <h1 id="sm-title">Where is good in <em id="sm-month-word">December</em>?</h1>
+      <p class="sm-lede">Turn the dial to your month and set what you can spend. Taller light means better season. Red means packed.</p>
+
+      <div class="sm-controls">
+        <div class="dial" id="dial" role="slider" tabindex="0" aria-label="Travel month" aria-valuemin="1" aria-valuemax="12" aria-valuenow="12" aria-valuetext="December">
+          <svg viewBox="0 0 200 200" aria-hidden="true">
+            <circle class="dial__track" cx="100" cy="100" r="72"/>
+            <path class="dial__arc" id="dial-arc" d=""/>
+            <g id="dial-ticks"></g>
+            <g class="dial__knob" id="dial-knob"><circle r="11"/></g>
+          </svg>
+          <div class="dial__center"><strong id="dial-month">Dec</strong><span>drag or use arrows</span></div>
+        </div>
+
+        <div class="sm-budget">
+          <label for="budget">Up to <strong id="budget-out">₹4,000</strong> per person a day</label>
+          <input type="range" id="budget" min="1500" max="12000" step="250" value="4000">
+          <div class="seg" role="radiogroup" aria-label="Travel style" id="sm-level">
+            <button type="button" role="radio" data-level="budget" aria-checked="false">Backpacker</button>
+            <button type="button" role="radio" data-level="mid" aria-checked="true">Comfort</button>
+            <button type="button" role="radio" data-level="premium" aria-checked="false">Premium</button>
+          </div>
+        </div>
+        <div class="sm-types" id="sm-types" aria-label="Trip type"></div>
+      </div>
+    </div>
+
+    <aside class="sm-side sm-side--right" aria-label="Best places this month">
+      <div class="sm-panel" id="sm-panel">
+        <div class="sm-panel__head">
+          <h2>Best in <span id="sm-month-short">December</span></h2>
+          <span class="sm-count" id="sm-count"></span>
+        </div>
+        <ol class="sm-list" id="sm-list"></ol>
+        <ul class="sm-legend" aria-label="Legend">
+          <li><i style="--c:#ffc46b"></i>Calm</li>
+          <li><i style="--c:#ff8a3d"></i>Busy</li>
+          <li><i style="--c:#ff4a5a"></i>Packed</li>
+          <li><i style="--c:#6d6585"></i>Over budget or off-type</li>
+        </ul>
+      </div>
+      <article class="sm-card" id="sm-card" hidden aria-live="polite"></article>
+    </aside>
+
+  </section>
+
+  <section class="section sm-trip" aria-labelledby="trip-title">
+    <div class="wrap sm-trip__grid">
+      <div class="section-head section-head--left">
+        <span class="kicker">Your route</span>
+        <h2 id="trip-title">Trip on the map</h2>
+        <p>Places you add show as glowing arcs on the map. Share the trip as a link: friends or an agent open it and see the same plan, nothing to retype.</p>
+      </div>
+      <div class="sm-route" id="sm-route"></div>
+    </div>
+  </section>
+
+  <section class="section sm-how" aria-labelledby="how-title">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="kicker">How it ranks</span>
+        <h2 id="how-title">Season, budget, crowd</h2>
+      </div>
+      <div class="sm-how__grid">
+        <div><span data-icon="sun"></span><h3>Season</h3><p>A month on a place's best-season list scores full. A month next to it scores half. The pillar's height shows this.</p></div>
+        <div><span data-icon="wallet"></span><h3>Budget</h3><p>Daily cost per person at your travel style, with two people sharing a room. Places above your budget turn grey.</p></div>
+        <div><span data-icon="users"></span><h3>Crowd</h3><p>Our estimate from school holidays, long weekends and festival dates. Packed places drop down the list and suggest a quieter twin.</p></div>
+      </div>
+      <p class="sm-note">The map uses India's official boundary as published by the Survey of India, simplified from DataMeet's open data (CC BY 4.0). Crowd levels and costs are estimates.</p>
+    </div>
+  </section>
+</main>
+
+<!-- @include footer -->
+<!-- @include scripts -->
+<script src="js/india-map.js" defer></script>
+<script src="js/season.js" defer></script>
+<script src="js/season-scene.js" defer></script>
+</body>
+</html>
