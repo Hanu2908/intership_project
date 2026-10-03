@@ -1,0 +1,7 @@
+# Keep text files with LF line endings on every OS, so builds match everywhere
+* text=auto eol=lf
+*.pptx binary
+*.pdf binary
+*.png binary
+*.jpg binary
+*.svg text eol=lf

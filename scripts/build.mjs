@@ -11,7 +11,8 @@ import { createHash } from "node:crypto";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (p) => readFileSync(join(root, p), "utf8");
 
-const hash = (f) => createHash("sha1").update(readFileSync(join(root, f))).digest("hex").slice(0, 8);
+// line endings are normalised first, so a Windows checkout (CRLF) builds the same hashes
+const hash = (f) => createHash("sha1").update(readFileSync(join(root, f), "utf8").replace(/\r\n/g, "\n")).digest("hex").slice(0, 8);
 const pages = readdirSync(join(root, "src/pages")).filter((f) => f.endsWith(".html"));
 
 // ---- 1. icons ----
