@@ -132,7 +132,7 @@
   async function renderMap(list) {
     if (!map) {
       try {
-        map = await window.UI.makeMap($("#map"), { center: [22.5, 80], zoom: 5 });
+        map = await window.UI.makeMap($("#map"));
       } catch (e) {
         $("#map").innerHTML = `<p class="fine" style="padding:1.5rem">The map couldn't load. Check your connection, or use the grid view.</p>`;
         return;
@@ -158,7 +158,9 @@
     });
     setTimeout(() => {
       map.invalidateSize();
-      if (pts.length > 1) map.fitBounds(pts, { padding: [40, 40], maxZoom: 7 });
+      // every place on show: frame the whole country, not just the pins
+      if (pts.length >= 12) map.fitBounds(window.UI.INDIA_BOUNDS, { padding: [12, 12] });
+      else if (pts.length > 1) map.fitBounds(pts, { padding: [40, 40], maxZoom: 7 });
       else if (pts.length === 1) map.setView(pts[0], 7);
     }, 60);
   }

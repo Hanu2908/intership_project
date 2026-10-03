@@ -127,6 +127,8 @@
   }
   // No tile service: tiled world maps draw international boundary claims. We draw
   // India's official outline ourselves, so every map on the site shows it correctly.
+  // whole of India, from Ladakh to Kanyakumari and the islands
+  const INDIA_BOUNDS = [[6.5, 68], [37.1, 97.4]];
   async function makeMap(el, opts = {}) {
     const [L, rings] = await Promise.all([loadLeaflet(), loadIndia()]);
     el.classList.add("map--india");
@@ -136,6 +138,7 @@
     L.polygon(rings.map((r) => [r.map(([x, y]) => [y, x])]), {
       color: "#4a3a8f", weight: 1.4, opacity: 0.7, fillColor: "#fbf7f1", fillOpacity: 1, interactive: false,
     }).addTo(map);
+    if (!opts.center) map.fitBounds(INDIA_BOUNDS, { padding: [12, 12] });
     // the page keeps scrolling over the map; a click turns on wheel zoom
     el.addEventListener("click", () => map.scrollWheelZoom.enable());
     el.addEventListener("mouseleave", () => map.scrollWheelZoom.disable());
@@ -802,5 +805,5 @@
     $("#share-load", dlg).addEventListener("click", apply);
   })();
 
-  window.UI = { carousel, shareTrip, tripLink, makeMap, loadLeaflet, loadIndia, pin, gmaps, creditLine, openCredits, $, $$, esc, rich, icon, hydrate, photo, toast, modal, closeModal, monthStrip, openDestination, openBooking, packageCard, openDrawer, cartTotals, stepper, bindSteppers, validate, liveValidate, field, reveal, fmtDate, empty };
+  window.UI = { carousel, shareTrip, tripLink, makeMap, INDIA_BOUNDS, loadLeaflet, loadIndia, pin, gmaps, creditLine, openCredits, $, $$, esc, rich, icon, hydrate, photo, toast, modal, closeModal, monthStrip, openDestination, openBooking, packageCard, openDrawer, cartTotals, stepper, bindSteppers, validate, liveValidate, field, reveal, fmtDate, empty };
 })();

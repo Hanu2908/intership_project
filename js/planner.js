@@ -186,7 +186,7 @@
       if (mapBusy) return;
       mapBusy = true;
       try {
-        map = await window.UI.makeMap($("#route-map"), { center: [22.5, 80], zoom: 5 });
+        map = await window.UI.makeMap($("#route-map"));
         layer = window.L.layerGroup().addTo(map);
       } catch (e) {
         $("#route-map").innerHTML = `<p class="fine" style="padding:1.5rem">The map couldn't load.</p>`;
