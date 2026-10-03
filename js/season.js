@@ -231,12 +231,20 @@
     return labels.get(id);
   }
   function placeLabels() {
-    const show = new Set([...topIds, st.sel, hoverId, ...Store.get().trip.stops.map((s) => s.id)].filter(Boolean));
-    labels.forEach((el, id) => { if (!show.has(id)) el.classList.remove("is-on"); });
+    // most important first; a label that would overlap one already placed is hidden
+    const order = [st.sel, hoverId, ...topIds, ...Store.get().trip.stops.map((s) => s.id)].filter(Boolean);
+    const show = [...new Set(order)];
+    const placed = [];
+    labels.forEach((el, id) => { if (!show.includes(id)) el.classList.remove("is-on"); });
     show.forEach((id) => {
       const p = map.screenOf(id);
       const el = labelFor(id);
       if (!p) { el.classList.remove("is-on"); return; }
+      const w = el.offsetWidth || 80, h = el.offsetHeight || 22;
+      const box = { l: p.x - w / 2 - 3, r: p.x + w / 2 + 3, t: p.y - h - 2, b: p.y + 2 };
+      const hit = placed.some((o) => box.l < o.r && box.r > o.l && box.t < o.b && box.b > o.t);
+      if (hit) { el.classList.remove("is-on"); return; }
+      placed.push(box);
       el.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px) translate(-50%, -100%)`;
       el.classList.add("is-on");
       el.classList.toggle("is-sel", id === st.sel || id === hoverId);
