@@ -4,8 +4,8 @@
    Rendering pauses when the hero is off-screen or the tab is hidden. */
 import {
   WebGLRenderer, Scene, PerspectiveCamera, Mesh, PlaneGeometry, ShaderMaterial, BufferGeometry,
-  Float32BufferAttribute, MeshBasicMaterial, Color, Group, Points, CanvasTexture, AdditiveBlending,
-  SRGBColorSpace, DoubleSide,
+  Float32BufferAttribute, Color, Points, AdditiveBlending,
+  SRGBColorSpace, DoubleSide, WebGLRenderTarget, OrthographicCamera, Vector3,
 } from "three";
 
 const canvas = document.getElementById("hero-canvas");
@@ -55,6 +55,7 @@ function start() {
 
   // ---------- sky ----------
   const SUN = { x: 0.8, y: 0.585 };
+  const SUN_VIEW = { x: 0.42, y: 0.11 }; // sun as a fraction of the view, set in resize()
   const sky = new Mesh(
     new PlaneGeometry(1, 1),
     new ShaderMaterial({
@@ -121,66 +122,123 @@ function start() {
   scene.add(new Points(starGeo, starMat));
 
   // ---------- clouds ----------
-  // Soft clouds: many blurred puffs, lit from the sun side, cooler underneath.
-  function cloudTexture(seed, kind) {
-    const W = 512, H = kind === "stratus" ? 128 : 256;
-    const c = document.createElement("canvas");
-    c.width = W; c.height = H;
-    const g = c.getContext("2d");
-    const puffs = kind === "stratus" ? 46 : 70;
-    for (let i = 0; i < puffs; i++) {
-      const t = hash(i, seed);
-      const along = kind === "stratus" ? 0.08 + t * 0.84 : 0.15 + Math.pow(hash(i + 3, seed), 0.9) * 0.7;
-      const hump = Math.sin(along * Math.PI);
-      const r = kind === "stratus" ? 10 + hash(i + 7, seed) * 18 : (18 + hash(i + 7, seed) * 46) * (0.45 + 0.55 * hump);
-      const x = along * W;
-      const y = kind === "stratus" ? H * 0.5 + (hash(i + 11, seed) - 0.5) * 18 : H * 0.78 - hump * H * 0.42 * hash(i + 13, seed) - r * 0.3;
-      const rg = g.createRadialGradient(x, y, 0, x, y, r);
-      rg.addColorStop(0, "rgba(255,255,255,0.9)");
-      rg.addColorStop(0.55, "rgba(255,255,255,0.55)");
-      rg.addColorStop(1, "rgba(255,255,255,0)");
-      g.fillStyle = rg;
-      g.beginPath();
-      g.arc(x, y, r, 0, Math.PI * 2);
-      g.fill();
-    }
-    // colour: warm where the sun hits the top, violet in the shade below
-    g.globalCompositeOperation = "source-in";
-    const grad = g.createLinearGradient(0, 0, 0, H);
-    if (kind === "stratus") {
-      grad.addColorStop(0, "#ffe0c2");
-      grad.addColorStop(1, "#f0a59a");
-    } else {
-      grad.addColorStop(0, "#fff1e2");
-      grad.addColorStop(0.42, "#f8c7b4");
-      grad.addColorStop(0.75, "#c99ac2");
-      grad.addColorStop(1, "#8f74bd");
-    }
-    g.fillStyle = grad;
-    g.fillRect(0, 0, W, H);
-    g.globalCompositeOperation = "source-atop";
-    const rim = g.createRadialGradient(W * 0.82, H * 0.2, 0, W * 0.82, H * 0.2, W * 0.55);
-    rim.addColorStop(0, "rgba(255,226,170,0.55)");
-    rim.addColorStop(1, "rgba(255,226,170,0)");
-    g.fillStyle = rim;
-    g.fillRect(0, 0, W, H);
-    const tex = new CanvasTexture(c);
-    tex.colorSpace = SRGBColorSpace;
-    return tex;
+  // Big cumulus banks behind the snow peak and thin streaks high up. Each one is
+  // painted once on the GPU into a texture (billowy noise + light marched toward
+  // the sun), so the per-frame cost is a single textured quad.
+  const bakeCam = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const bakeScene = new Scene();
+  const bakeMat = new ShaderMaterial({
+    uniforms: {
+      uKind: { value: 0 }, uSeed: { value: 0 }, uAspect: { value: 2 }, uSun: { value: [3, 0.3] },
+      uTowers: { value: [] }, uBase: { value: 0.16 },
+    },
+    vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`,
+    fragmentShader: `
+      uniform float uKind, uSeed, uAspect, uBase; uniform vec2 uSun; uniform vec3 uTowers[6]; varying vec2 vUv;
+      vec2 h2(vec2 p){ p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3))) + uSeed; return fract(sin(p) * 43758.5453); }
+      float h1(vec2 p){ return fract(sin(dot(p + uSeed, vec2(12.9898, 78.233))) * 43758.5453); }
+      float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(h1(i), h1(i + vec2(1, 0)), f.x), mix(h1(i + vec2(0, 1)), h1(i + vec2(1, 1)), f.x), f.y); }
+      float fbm(vec2 p){ float a = 0.5, s = 0.0; for (int i = 0; i < 5; i++){ s += a * vn(p); p = p * 2.03 + 7.1; a *= 0.5; } return s; }
+      // union of discs of random size: the cauliflower edge of a cumulus
+      float bump(vec2 p){ vec2 i = floor(p), f = fract(p); float b = 0.0;
+        for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++){
+          vec2 g = vec2(x, y); vec2 o = h2(i + g); vec2 r = g + o * 0.7 + 0.15 - f;
+          float R = 0.5 + 0.35 * h1(i + g + 9.0); float q = max(0.0, 1.0 - dot(r, r) / (R * R)); b = max(b, R * q * (2.0 - q));
+        }
+        return b; }
+      float billow(vec2 p){ return 0.55 * bump(p) + 0.3 * bump(p * 2.1 + 3.1) + 0.15 * bump(p * 4.4 + 1.7); }
+      float field(vec2 p){
+        if (uKind < 0.5){
+          float top = uBase;
+          for (int i = 0; i < 6; i++){ vec3 t = uTowers[i]; float d = (p.x - t.x) / t.z; top += t.y * exp(-d * d); }
+          top *= smoothstep(0.0, 0.25, p.x) * smoothstep(uAspect, uAspect - 0.25, p.x);
+          vec2 w = vec2(fbm(p * 3.0), fbm(p * 3.0 + 5.2)) * 0.08;
+          float sc = 4.6;
+          return (top - p.y) + 0.2 * (billow(p * sc + w * 6.0) - 0.42) + 0.012 * (fbm(p * 12.0) - 0.5);
+        }
+        // stratus: a long thin band, torn by stretched noise
+        float n = fbm(vec2(p.x * 2.2, p.y * 9.0) + 3.0) ;
+        float band = 0.11 * smoothstep(0.0, 0.35, p.x) * smoothstep(uAspect, uAspect - 0.5, p.x) * (0.4 + n);
+        return band - abs(p.y - 0.5 - 0.06 * sin(p.x * 2.3 + uSeed)) + 0.03 * (fbm(p * vec2(6.0, 22.0)) - 0.5);
+      }
+      void main(){
+        vec2 p = vec2(vUv.x * uAspect, vUv.y);
+        float f = field(p);
+        float dens = smoothstep(0.0, uKind < 0.5 ? 0.02 : 0.05, f);
+        if (dens <= 0.0){ gl_FragColor = vec4(0.0); return; }
+        // how much cloud lies between this point and the sun
+        vec2 L = normalize(uSun - p);
+        float glow = exp(-length(uSun - p) * 1.6);
+        float occ = 0.0;
+        for (int i = 1; i <= 5; i++){ float s = float(i * i) * 0.006; occ += max(field(p + L * s), 0.0); }
+        // each billow is shaded as a rounded surface turned toward or away from the sun
+        float e = 0.012;
+        vec2 gr = vec2(field(p + vec2(e, 0.0)) - field(p - vec2(e, 0.0)), field(p + vec2(0.0, e)) - field(p - vec2(0.0, e))) / (2.0 * e);
+        vec3 n = normalize(vec3(-gr, uKind < 0.5 ? 2.2 : 6.0));
+        float diff = clamp(dot(n, normalize(vec3(L, 0.45))), 0.0, 1.0);
+        float lit = diff * (0.3 + 0.7 * exp(-occ * (uKind < 0.5 ? 6.0 : 12.0)));
+        float sky = 0.5 + 0.5 * n.y;
+        float edge = 1.0 - smoothstep(0.0, 0.05, f);
+        vec3 shade = vec3(0.5, 0.4, 0.66), mid = vec3(0.8, 0.6, 0.74), sun = vec3(1.0, 0.72, 0.48), rim = vec3(1.0, 0.9, 0.72);
+        vec3 c = mix(shade, mid, sky * 0.7);
+        c = mix(c, sun, clamp(lit * (0.85 + 0.4 * glow), 0.0, 1.0));
+        c = mix(c, rim, clamp(edge * lit * (0.5 + glow), 0.0, 1.0));
+        c += vec3(1.0, 0.6, 0.3) * glow * lit * 0.25;
+        c *= 1.0 - 0.28 * smoothstep(0.04, 0.3, f) * (1.0 - lit);
+        float a = dens;
+        if (uKind < 0.5){
+          // base sinks into warm horizon haze
+          c = mix(c, vec3(0.93, 0.62, 0.6), smoothstep(0.3, 0.0, p.y) * 0.6);
+          a *= smoothstep(0.0, 0.12, p.y);
+        } else {
+          a *= 0.85;
+        }
+        gl_FragColor = vec4(c, a);
+      }`,
+  });
+  bakeScene.add(new Mesh(new PlaneGeometry(2, 2), bakeMat));
+
+  function bakeCloud(o) {
+    const aspect = o.aspect;
+    const rt = new WebGLRenderTarget(1024, o.kind === "stratus" ? 256 : 512);
+    const u = bakeMat.uniforms;
+    u.uKind.value = o.kind === "stratus" ? 1 : 0;
+    u.uSeed.value = o.seed;
+    u.uAspect.value = aspect;
+    u.uSun.value = o.sun;
+    u.uBase.value = o.base || 0.16;
+    const t = (o.towers || []).map(([x, h, w]) => new Vector3(x, h, w));
+    while (t.length < 6) t.push(new Vector3(0, 0, 1));
+    u.uTowers.value = t;
+    renderer.setRenderTarget(rt);
+    renderer.render(bakeScene, bakeCam);
+    renderer.setRenderTarget(null);
+    return rt;
   }
-  const clouds = [];
-  [
-    { x: -0.3, y: 0.34, z: -44, s: 0.15, v: 0.004, seed: 1 },
-    { x: 0.42, y: 0.3, z: -40, s: 0.13, v: 0.006, seed: 2 },
-    { x: 0.08, y: 0.24, z: -32, s: 0.09, v: 0.009, seed: 3 },
-    { x: 0.3, y: 0.06, z: -56, s: 0.2, v: 0.003, seed: 5, kind: "stratus" },
-    { x: -0.15, y: 0.03, z: -58, s: 0.24, v: 0.002, seed: 6, kind: "stratus" },
-  ].forEach((o) => {
-    const tex = cloudTexture(o.seed, o.kind);
-    const m = new Mesh(new PlaneGeometry(1, o.kind === "stratus" ? 0.25 : 0.5), new MeshBasicMaterial({ map: tex, transparent: true, opacity: o.kind === "stratus" ? 0.7 : 0.88, depthWrite: false }));
-    m.userData = o;
-    clouds.push(m);
+
+  const cloudMat = (tex) => new ShaderMaterial({
+    transparent: true, depthWrite: false,
+    uniforms: { uMap: { value: tex }, uOpacity: { value: 1 } },
+    vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    // baked colours are already display values, so no colour-space conversion here
+    fragmentShader: `uniform sampler2D uMap; uniform float uOpacity; varying vec2 vUv; void main(){ vec4 c = texture2D(uMap, vUv); gl_FragColor = vec4(c.rgb, c.a * uOpacity); }`,
+  });
+
+  // x: centre, fraction of view width. y: bottom edge, fraction of view height. s: width as a fraction of view width.
+  const clouds = [
+    { x: 0.08, y: -0.16, z: -62, s: 1.05, seed: 1.3, drift: 0.012,
+      towers: [[0.25, 0.12, 0.2], [0.58, 0.28, 0.24], [0.9, 0.36, 0.2], [1.3, 0.38, 0.2], [1.6, 0.03, 0.1], [1.86, 0.12, 0.12]] },
+    { x: -0.42, y: -0.14, z: -64, s: 0.8, seed: 4.7, drift: 0.008, base: 0.12,
+      towers: [[0.4, 0.14, 0.2], [0.85, 0.24, 0.17], [1.2, 0.18, 0.2], [1.6, 0.12, 0.15]] },
+    { x: 0.3, y: 0.2, z: -60, s: 0.62, v: 0.0025, seed: 2.1, kind: "stratus" },
+    { x: -0.3, y: 0.22, z: -60, s: 0.45, v: 0.002, seed: 6.4, kind: "stratus" },
+  ].map((o) => {
+    const aspect = o.kind === "stratus" ? 4 : 2;
+    const m = new Mesh(new PlaneGeometry(1, 1 / aspect), cloudMat(null));
+    m.userData = { ...o, aspect };
     scene.add(m);
+    return m;
   });
 
   // ---------- mountain layers ----------
@@ -455,25 +513,85 @@ function start() {
   }
 
   // ---------- birds ----------
-  const birdGeo = new BufferGeometry();
-  birdGeo.setAttribute("position", new Float32BufferAttribute([
-    0, 0, 0, -1, 0.42, 0, -0.32, -0.04, 0,
-    0, 0, 0, 0.32, -0.04, 0, 1, 0.42, 0,
-    -0.12, 0.02, 0, 0.12, 0.02, 0, 0, -0.14, 0,
-  ], 3));
-  const birdMat = new MeshBasicMaterial({ color: new Color("#2b1f55"), side: DoubleSide });
-  const flock = new Group();
-  flock.position.z = -20;
-  scene.add(flock);
-  const birds = [];
-  for (let i = 0; i < 11; i++) {
-    const b = new Mesh(birdGeo, birdMat);
-    const s = 0.14 + Math.random() * 0.08;
-    b.scale.set(s, s, s);
-    b.userData = { ox: (i % 4) * 0.9 + Math.random() * 0.6 + Math.floor(i / 4) * 0.5, oy: (Math.random() - 0.5) * 1.4 + (i % 3) * 0.25, f: 6 + Math.random() * 3, p: Math.random() * 6.28, s };
-    birds.push(b);
-    flock.add(b);
+  // A small 3D gull: spindle body, fanned tail and swept wings along z. The wing
+  // folds at the elbow in the vertex shader, the outer half lagging the inner,
+  // so the silhouette changes through the stroke the way a real one does.
+  function birdGeometry() {
+    const pos = [], wing = [];
+    const tri = (a, b, c, wa = 0, wb = 0, wc = 0) => { pos.push(...a, ...b, ...c); wing.push(wa, wb, wc); };
+    // body, as two crossed outlines so it reads from any angle (head toward -x)
+    const body = [[-0.46, 0], [-0.4, 0.035], [-0.3, 0.06], [-0.12, 0.075], [0.08, 0.06], [0.24, 0.035], [0.3, 0.025]];
+    for (let i = 0; i < body.length - 1; i++) {
+      const [x0, r0] = body[i], [x1, r1] = body[i + 1];
+      tri([x0, r0, 0], [x1, r1, 0], [x1, -r1 * 0.8, 0]);
+      tri([x0, r0, 0], [x1, -r1 * 0.8, 0], [x0, -r0 * 0.8, 0]);
+      tri([x0, 0, r0], [x1, 0, r1], [x1, 0, -r1]);
+      tri([x0, 0, r0], [x1, 0, -r1], [x0, 0, -r0]);
+    }
+    // tail fan
+    tri([0.24, 0, 0.03], [0.46, 0, 0.11], [0.46, 0, -0.11]);
+    tri([0.24, 0, 0.03], [0.46, 0, -0.11], [0.24, 0, -0.03]);
+    // wings: leading edge bows forward at the wrist, tip swept back to a point
+    const R = [0, 0.12, 0.25, 0.38, 0.5, 0.62, 0.74, 0.85, 0.94, 1];
+    const le = (r) => -0.13 - 0.07 * Math.sin(Math.min(1, r / 0.55) * Math.PI * 0.5) + 0.42 * Math.pow(Math.max(0, r - 0.5), 1.5);
+    const chord = (r) => 0.3 * (1 - Math.pow(r, 2.4)) + 0.015;
+    for (const sg of [1, -1]) {
+      for (let i = 0; i < R.length - 1; i++) {
+        const r0 = R[i], r1 = R[i + 1];
+        const a = [le(r0), 0, sg * (0.04 + r0)], b = [le(r1), 0, sg * (0.04 + r1)];
+        const c = [le(r1) + chord(r1), 0, sg * (0.04 + r1)], d = [le(r0) + chord(r0), 0, sg * (0.04 + r0)];
+        tri(a, b, c, r0, r1, r1);
+        tri(a, c, d, r0, r1, r0);
+      }
+    }
+    const g = new BufferGeometry();
+    g.setAttribute("position", new Float32BufferAttribute(pos, 3));
+    g.setAttribute("aWing", new Float32BufferAttribute(wing, 1));
+    return g;
   }
+  const birdGeo = birdGeometry();
+  const birdVert = `
+    attribute float aWing; uniform vec2 uFlap; uniform float uBob;
+    void main(){
+      vec3 p = position;
+      if (aWing > 0.0){
+        float sg = sign(p.z), r = abs(p.z) - 0.04, r0 = 0.45;
+        float a1 = uFlap.x, a2 = uFlap.y;
+        vec2 inner = vec2(sin(a1), cos(a1)) * min(r, r0);
+        vec2 outer = r > r0 ? vec2(sin(a2), cos(a2)) * (r - r0) : vec2(0.0);
+        vec2 yz = inner + outer;
+        p.y += yz.x; p.z = sg * (0.04 + yz.y);
+        p.x += 0.05 * r * sin(a1); // wings sweep forward on the downstroke
+      }
+      p.y += uBob;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+    }`;
+  const birdFrag = `uniform vec3 uColor;
+    void main(){
+      gl_FragColor = vec4(uColor, 1.0);
+      #include <colorspace_fragment>
+    }`;
+  const near = new Color("#1d1540"), far = new Color("#4f3c80");
+  const birds = [];
+  // a loose flock in the middle distance, and a pair gliding close to the camera
+  const BIRDS = [
+    ...Array.from({ length: 9 }, (_, i) => ({ z: -19 - (i % 3) * 2.5, span: 0.32 + Math.random() * 0.07, lead: i,
+      ox: Math.floor((i + 1) / 2) * 0.9 * (i % 2 ? 1 : 0.8) + Math.random() * 0.4, oy: Math.floor((i + 1) / 2) * 0.3 * (i % 2 ? 1 : -1) + (Math.random() - 0.5) * 0.3,
+      y: 0.26, speed: 0.5, freq: 7 + Math.random() * 1.5, glide: 0.45 })),
+    { z: -8, span: 0.55, ox: 0, oy: 0, y: 0.28, speed: 0.34, freq: 4.6, glide: 0.75, solo: 7 },
+    { z: -9.5, span: 0.46, ox: 2.4, oy: 0.25, y: 0.3, speed: 0.34, freq: 5, glide: 0.75, solo: 7 },
+  ];
+  BIRDS.forEach((o, i) => {
+    const tint = near.clone().lerp(far, Math.min(1, (-o.z - 8) / 16));
+    const m = new Mesh(birdGeo, new ShaderMaterial({
+      side: DoubleSide,
+      uniforms: { uFlap: { value: [0, 0] }, uBob: { value: 0 }, uColor: { value: tint } },
+      vertexShader: birdVert, fragmentShader: birdFrag,
+    }));
+    m.userData = { ...o, p: Math.random() * 6.28, g: Math.random() * 20 + i, span0: 0 };
+    birds.push(m);
+    scene.add(m);
+  });
 
   // ---------- dust ----------
   const DUST = 70;
@@ -497,7 +615,7 @@ function start() {
   scene.add(dust);
 
   // ---------- layout ----------
-  let W = 0, H = 0, flockSpan = 10;
+  let W = 0, H = 0;
   function resize() {
     const r = hero.getBoundingClientRect();
     W = Math.max(1, Math.round(r.width));
@@ -508,15 +626,34 @@ function start() {
     const v = viewAt(sky.position.z);
     sky.scale.set(v.w * 1.4, v.h * 1.3, 1);
     sky.material.uniforms.uAspect.value = (v.w * 1.4) / (v.h * 1.3);
+    SUN_VIEW.x = (SUN.x - 0.5) * 1.4;
+    SUN_VIEW.y = (SUN.y - 0.5) * 1.3;
     starMat.uniforms.uScale.value = [v.w * 1.3, v.h];
     clouds.forEach((m) => {
-      const cv = viewAt(m.userData.z);
-      const s = cv.h * m.userData.s * 2.6 * Math.min(1, 0.25 + camera.aspect * 0.6);
-      m.scale.set(s, s, 1);
-      m.userData.w = cv.w;
-      m.position.set(m.userData.x * cv.w, (m.userData.y + (camera.aspect < 1 ? 0.1 : 0)) * cv.h, m.userData.z);
+      const d = m.userData;
+      const cv = viewAt(d.z);
+      // width follows the view; height is tied to the view height so wide screens
+      // stretch the bank sideways instead of piling it up behind the nav
+      const fit = Math.max(1, 1.4 / camera.aspect);
+      const wide = cv.w * d.s * fit;
+      d.w = cv.w;
+      d.h = Math.min(wide, cv.h * 1.6 * d.s * fit) / d.aspect;
+      m.scale.set(wide, d.h * d.aspect, 1);
+      m.position.set(d.x * cv.w, d.y * cv.h + d.h / 2, d.z);
+      // the sun in this cloud's texture space, so the lit side faces it
+      d.sun = [((SUN_VIEW.x * cv.w - (m.position.x - wide / 2)) / wide) * d.aspect, (SUN_VIEW.y * cv.h - (m.position.y - d.h / 2)) / d.h];
+      if (d.rt) d.rt.dispose();
+      d.rt = bakeCloud(d);
+      m.material.uniforms.uMap.value = d.rt.texture;
     });
-    flockSpan = viewAt(flock.position.z).w * 1.3;
+    const small = Math.min(1, 0.45 + camera.aspect * 0.4);
+    birds.forEach((b) => {
+      const d = b.userData;
+      const v = viewAt(d.z);
+      d.vw = v.w * 1.3 + 4;
+      d.vh = v.h;
+      b.scale.setScalar(d.span * small * (v.h / 10));
+    });
     LAYERS.forEach(buildLayer);
     buildGrass();
     render(lastT);
@@ -550,17 +687,34 @@ function start() {
 
     clouds.forEach((m) => {
       const d = m.userData;
-      const span = d.w * 1.6;
-      let x = d.x * d.w + s * d.v * d.w;
-      x = ((x + span / 2) % span + span) % span - span / 2;
-      m.position.x = x;
+      if (d.kind === "stratus") {
+        const span = d.w * 1.4 + m.scale.x;
+        const x = d.x * d.w + s * d.v * d.w;
+        m.position.x = ((x + span / 2) % span + span) % span - span / 2;
+      } else {
+        m.position.x = d.x * d.w + Math.sin(s * d.drift) * d.w * 0.04;
+      }
     });
 
     birds.forEach((b) => {
       const d = b.userData;
-      let x = flockSpan / 2 - ((s * 0.55 + d.ox) % flockSpan);
-      b.position.set(x + d.ox * 0.3, 1.1 + d.oy + Math.sin(s * 0.8 + d.p) * 0.12, 0);
-      b.scale.y = d.s * Math.sin(s * d.f + d.p);
+      const k = b.scale.x;
+      // fly right to left across the view, then wrap round
+      const travel = s * d.speed * (d.vh / 10) + d.ox * k * 2.2 + (d.solo || 0);
+      const x = d.vw / 2 - (((travel % d.vw) + d.vw) % d.vw);
+      const y = d.y * d.vh + d.oy * k * 2.2 + Math.sin(s * 0.35 + d.p) * 0.05 * d.vh;
+      // bursts of flapping between glides; the flock flaps roughly together
+      const cycle = 0.5 + 0.5 * Math.sin(s * 0.45 + (d.solo ? d.p : 0) + (d.lead || 0) * 0.15);
+      const flap = Math.max(0, Math.min(1, (cycle - d.glide) / 0.12));
+      const ph = s * d.freq + d.p;
+      const amp = 0.85 * flap;
+      const a1 = 0.14 + amp * Math.sin(ph);
+      const a2 = a1 - 0.18 + amp * 0.55 * Math.sin(ph - 1.1);
+      b.material.uniforms.uFlap.value = [a1, a2];
+      b.material.uniforms.uBob.value = -0.06 * amp * Math.sin(ph);
+      b.position.set(x, y, d.z);
+      // seen from below and slightly behind, banking gently as it goes
+      b.rotation.set(-0.38 + Math.sin(s * 0.3 + d.p) * 0.12, 0.2, Math.sin(s * 0.5 + d.p) * 0.06);
     });
 
     GRASS.forEach((G) => (G.mesh.material.uniforms.uTime.value = s));
