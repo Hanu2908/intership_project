@@ -149,6 +149,15 @@ function start() {
         return b; }
       float billow(vec2 p){ return 0.55 * bump(p) + 0.3 * bump(p * 2.1 + 3.1) + 0.15 * bump(p * 4.4 + 1.7); }
       float field(vec2 p){
+        if (uKind > 1.5){
+          // a single floating cumulus: billowing top, flatter base
+          float top = uBase;
+          for (int i = 0; i < 6; i++){ vec3 t = uTowers[i]; float d = (p.x - t.x) / t.z; top += t.y * exp(-d * d); }
+          top *= smoothstep(0.05, 0.4, p.x) * smoothstep(uAspect - 0.05, uAspect - 0.4, p.x);
+          float bot = 0.2 + 0.04 * (fbm(vec2(p.x * 3.0, 1.0)) - 0.5);
+          vec2 w = vec2(fbm(p * 3.0), fbm(p * 3.0 + 5.2)) * 0.08;
+          return min(top - p.y, (p.y - bot) * 0.8) + 0.16 * (billow(p * 3.4 + w * 5.0) - 0.42) + 0.012 * (fbm(p * 12.0) - 0.5);
+        }
         if (uKind < 0.5){
           float top = uBase;
           for (int i = 0; i < 6; i++){ vec3 t = uTowers[i]; float d = (p.x - t.x) / t.z; top += t.y * exp(-d * d); }
@@ -165,7 +174,8 @@ function start() {
       void main(){
         vec2 p = vec2(vUv.x * uAspect, vUv.y);
         float f = field(p);
-        float dens = smoothstep(0.0, uKind < 0.5 ? 0.02 : 0.05, f);
+        bool cum = abs(uKind - 1.0) > 0.5;
+        float dens = smoothstep(0.0, cum ? 0.02 : 0.05, f);
         if (dens <= 0.0){ gl_FragColor = vec4(0.0); return; }
         // how much cloud lies between this point and the sun
         vec2 L = normalize(uSun - p);
@@ -175,9 +185,9 @@ function start() {
         // each billow is shaded as a rounded surface turned toward or away from the sun
         float e = 0.012;
         vec2 gr = vec2(field(p + vec2(e, 0.0)) - field(p - vec2(e, 0.0)), field(p + vec2(0.0, e)) - field(p - vec2(0.0, e))) / (2.0 * e);
-        vec3 n = normalize(vec3(-gr, uKind < 0.5 ? 2.2 : 6.0));
+        vec3 n = normalize(vec3(-gr, cum ? 2.2 : 6.0));
         float diff = clamp(dot(n, normalize(vec3(L, 0.45))), 0.0, 1.0);
-        float lit = diff * (0.3 + 0.7 * exp(-occ * (uKind < 0.5 ? 6.0 : 12.0)));
+        float lit = diff * (0.3 + 0.7 * exp(-occ * (cum ? 6.0 : 12.0)));
         float sky = 0.5 + 0.5 * n.y;
         float edge = 1.0 - smoothstep(0.0, 0.05, f);
         vec3 shade = vec3(0.5, 0.4, 0.66), mid = vec3(0.8, 0.6, 0.74), sun = vec3(1.0, 0.72, 0.48), rim = vec3(1.0, 0.9, 0.72);
@@ -191,6 +201,8 @@ function start() {
           // base sinks into warm horizon haze
           c = mix(c, vec3(0.93, 0.62, 0.6), smoothstep(0.3, 0.0, p.y) * 0.6);
           a *= smoothstep(0.0, 0.12, p.y);
+        } else if (cum) {
+          a *= 0.94;
         } else {
           a *= 0.85;
         }
@@ -201,9 +213,9 @@ function start() {
 
   function bakeCloud(o) {
     const aspect = o.aspect;
-    const rt = new WebGLRenderTarget(1024, o.kind === "stratus" ? 256 : 512);
+    const rt = new WebGLRenderTarget(o.kind === "puff" ? 640 : 1024, o.kind === "stratus" ? 256 : o.kind === "puff" ? 320 : 512);
     const u = bakeMat.uniforms;
-    u.uKind.value = o.kind === "stratus" ? 1 : 0;
+    u.uKind.value = o.kind === "stratus" ? 1 : o.kind === "puff" ? 2 : 0;
     u.uSeed.value = o.seed;
     u.uAspect.value = aspect;
     u.uSun.value = o.sun;
@@ -233,6 +245,11 @@ function start() {
       towers: [[0.4, 0.14, 0.2], [0.85, 0.24, 0.17], [1.2, 0.18, 0.2], [1.6, 0.12, 0.15]] },
     { x: 0.3, y: 0.2, z: -60, s: 0.62, v: 0.0025, seed: 2.1, kind: "stratus" },
     { x: -0.3, y: 0.22, z: -60, s: 0.45, v: 0.002, seed: 6.4, kind: "stratus" },
+    // two smaller clouds drifting in front of the snow peak
+    { x: -0.04, y: 0.04, z: -44, s: 0.34, v: 0.004, seed: 8.2, kind: "puff", base: 0.14,
+      towers: [[0.62, 0.32, 0.26], [1.02, 0.5, 0.24], [1.42, 0.34, 0.24]] },
+    { x: 0.36, y: -0.02, z: -40, s: 0.26, v: 0.006, seed: 3.9, kind: "puff", base: 0.14,
+      towers: [[0.66, 0.42, 0.26], [1.1, 0.34, 0.28], [1.42, 0.24, 0.22]] },
   ].map((o) => {
     const aspect = o.kind === "stratus" ? 4 : 2;
     const m = new Mesh(new PlaneGeometry(1, 1 / aspect), cloudMat(null));
@@ -272,6 +289,18 @@ function start() {
     float h1(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
     float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
       return mix(mix(h1(i), h1(i+vec2(1,0)), f.x), mix(h1(i+vec2(0,1)), h1(i+vec2(1,1)), f.x), f.y); }
+    // ridged noise in (angle round the summit, distance below it): sharp aretes that
+    // branch as they run down the face. Returns a height in view units.
+    float terr(vec2 q){
+      vec2 p = vec2(atan(q.x, q.y + 0.02) * 2.2, q.y * 4.0);
+      p.x += (vn(vec2(q.y * 6.0, uSeed)) - 0.5) * 0.7;
+      float s = 0.0, a = 0.5;
+      for (int i = 0; i < 4; i++){
+        float r = 1.0 - abs(vn(p + float(i) * 3.7 + uSeed) * 2.0 - 1.0);
+        s += r * r * a; a *= 0.45; p *= vec2(2.2, 1.8);
+      }
+      return s * 0.06 * smoothstep(0.0, 0.03, q.y);
+    }
     void main(){
       float d = max(vDepth, 0.0);
       float alt = vRidge - d;            // height of this pixel, in view-height units
@@ -292,30 +321,40 @@ function start() {
       if (uSnow > 0.5) {
         float onPeak = smoothstep(0.02, 0.25, vPeak);
         float down = max(uTopAlt - alt, 0.0);
-        // angle around the summit: gullies and ribs fan out from the top
-        float ang = atan(vU - uCrestU, down + 0.004);
-        float rib = vn(vec2(ang * 15.0, alt * 1.4)) * 0.7 + vn(vec2(ang * 38.0, alt * 3.0)) * 0.3;
-        // the dividing ridge between the shadow face and the sun face wavers a little
-        // the main ridge runs from the summit down towards the right-hand shoulder
-        float split = (vU - uCrestU) - down * 0.55 + (vn(vec2(alt * 14.0, 4.0)) - 0.5) * 0.04 * smoothstep(0.0, 0.05, down);
-        float face = smoothstep(-0.008, 0.008, split);
-        float relief = 1.0 - 0.55 * smoothstep(0.08, 0.3, down);   // contrast fades into the haze below
-        // rock: cool and dark in shadow, warm in the sun, with ribs
-        vec3 shadowRock = c * vec3(0.74, 0.74, 0.9) * (0.9 + 0.2 * rib);
-        vec3 litRock = mix(c, uLit, 0.42) * (0.9 + 0.2 * rib);
-        c = mix(c, mix(shadowRock, litRock, face), onPeak * relief);
-        // snow by altitude; fingers of snow run further down the gullies
-        float gully = 1.0 - smoothstep(0.3, 0.7, vn(vec2(ang * 11.0, alt * 1.2)));
-        float line = uSnowAlt - gully * 0.06 + (vn(vec2(vU * 20.0, 0.3)) - 0.5) * 0.03;
-        float m = smoothstep(line - 0.006, line + 0.006, alt) * onPeak;
-        // rock ribs poke through the snow, mostly near the snowline
-        m *= 1.0 - smoothstep(0.62, 0.8, rib) * (0.3 + 0.6 * (1.0 - smoothstep(line, line + 0.06, alt)));
-        vec3 snowShade = vec3(0.66, 0.64, 0.9);
-        vec3 snowLit = vec3(1.0, 0.89, 0.8);
-        vec3 snow = mix(snowShade, snowLit, face) * (0.93 + 0.1 * rib);
+        vec2 q = vec2(vU - uCrestU, down);
+        // the main ridge runs from the summit down towards the right-hand shoulder,
+        // splitting a shadow face (left) from a sun face (right)
+        float split = q.x - down * 0.55 + (vn(vec2(alt * 14.0, 4.0)) - 0.5) * 0.04 * smoothstep(0.0, 0.05, down);
+        float face = smoothstep(-0.006, 0.006, split);
+        // small-scale terrain: ridges and gullies fanning out from the summit, lit as a surface
+        float e = 0.0018;
+        float H0 = terr(q), Hx = terr(q + vec2(e, 0.0)), Hy = terr(q + vec2(0.0, e));
+        vec2 g = vec2(Hx - H0, Hy - H0) / e * (0.25 + 2.5 * down);
+        vec3 n = normalize(vec3(mix(-1.0, 1.0, face) - g.x * 0.6, 0.35 + g.y * 0.6, 1.0));
+        float diff = clamp(dot(n, normalize(vec3(0.85, 0.3, 0.45))), 0.0, 1.0);
+        float steep = length(g);
+        float relief = 1.0 - 0.6 * smoothstep(0.08, 0.32, down);   // contrast fades into the haze below
+        // rock: dark and cool in shade, warm where the sun reaches it
+        vec3 rock = mix(c * vec3(0.55, 0.52, 0.72), mix(c, uLit, 0.5) * 0.92, smoothstep(0.15, 0.85, diff));
+        c = mix(c, rock, onPeak * relief);
+        // snow lies on gentle ground and fills the gullies; steep ridge flanks stay bare
+        // gullies (low ground) carry snow far down; ridges lose it sooner
+        float gully = smoothstep(0.55, 0.15, H0 / 0.06);
+        float line = uSnowAlt + 0.03 - 0.16 * gully * (0.5 + vn(vec2(atan(q.x, down + 0.02) * 9.0, 2.0)))
+                   + (vn(vec2(vU * 26.0, alt * 8.0)) - 0.5) * 0.04;
+        float m = smoothstep(line - 0.007, line + 0.007, alt);
+        // scattered patches below the line
+        float patchy = smoothstep(0.62, 0.72, vn(vec2(vU * 70.0, alt * 40.0)) * 0.6 + vn(vec2(vU * 160.0, alt * 90.0)) * 0.4);
+        m = max(m, patchy * smoothstep(line - 0.09, line - 0.01, alt) * (0.4 + 0.6 * gully)) * onPeak;
+        float bare = smoothstep(0.55, 0.85, steep + 0.18 * (1.0 - face) + 0.2 * vn(vec2(q.x * 60.0, down * 20.0)));
+        m *= 1.0 - bare * (0.6 + 0.35 * (1.0 - face));
+        // fine flutes running down the snow
+        float flute = vn(vec2(atan(q.x, down + 0.004) * 70.0, down * 5.0));
+        vec3 snowShade = vec3(0.66, 0.66, 0.9), snowLit = vec3(1.0, 0.93, 0.86);
+        vec3 snow = mix(snowShade, snowLit, smoothstep(0.25, 0.7, diff)) * (0.96 + 0.06 * flute);
         // a touch of alpenglow near the summit on the sun face
-        snow = mix(snow, vec3(1.0, 0.78, 0.7), face * 0.25 * (1.0 - smoothstep(0.0, 0.08, down)));
-        c = mix(c, snow, m);
+        snow = mix(snow, vec3(1.0, 0.8, 0.72), face * 0.22 * (1.0 - smoothstep(0.0, 0.08, down)));
+        c = mix(c, mix(c, snow, relief * 0.25 + 0.75), m);
       }
       c = mix(c, uMist, smoothstep(0.08, 0.46, d));
       c += (h1(gl_FragCoord.xy) - 0.5) / 255.0;
@@ -687,7 +726,7 @@ function start() {
 
     clouds.forEach((m) => {
       const d = m.userData;
-      if (d.kind === "stratus") {
+      if (d.v) {
         const span = d.w * 1.4 + m.scale.x;
         const x = d.x * d.w + s * d.v * d.w;
         m.position.x = ((x + span / 2) % span + span) % span - span / 2;
